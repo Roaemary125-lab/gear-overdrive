@@ -1,0 +1,1895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gear Overdrive - Ultimate Clicker</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+
+  :root {
+    --gear-gold: #fbbf24;
+    --gear-dark: #1e1b4b;
+    --gear-accent: #06b6d4;
+    --gear-danger: #ef4444;
+    --gear-success: #22c55e;
+    --godly-purple: #a855f7;
+  }
+
+  body {
+    font-family: 'Rajdhani', sans-serif;
+    background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+    color: #e2e8f0;
+    overflow-x: hidden;
+    min-height: 100vh;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .font-orbitron { font-family: 'Orbitron', sans-serif; }
+
+  .gear-spin {
+    animation: spin 8s linear infinite;
+  }
+
+  .gear-spin-fast {
+    animation: spin 2s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { filter: drop-shadow(0 0 10px var(--gear-gold)); }
+    50% { filter: drop-shadow(0 0 30px var(--gear-gold)); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .big-gear {
+    cursor: pointer;
+    transition: transform 0.1s;
+    filter: drop-shadow(0 0 15px rgba(251, 191, 36, 0.5));
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+
+  .big-gear:active {
+    transform: scale(0.92);
+  }
+
+  .click-particle {
+    position: absolute;
+    pointer-events: none;
+    font-weight: bold;
+    animation: floatUp 1.2s ease-out forwards;
+    text-shadow: 0 0 5px currentColor;
+  }
+
+  @keyframes floatUp {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-100px) scale(1.3); }
+  }
+
+  .tab-btn {
+    transition: all 0.3s;
+    border-bottom: 3px solid transparent;
+  }
+
+  .tab-btn.active {
+    border-bottom-color: var(--gear-gold);
+    background: rgba(251, 191, 36, 0.1);
+  }
+
+  .upgrade-card, .research-card, .achievement-card, .building-card, .stock-card, .universe-card {
+    background: rgba(30, 27, 75, 0.6);
+    border: 1px solid rgba(251, 191, 36, 0.2);
+    transition: border-color 0.2s, box-shadow 0.2s, opacity 0.2s;
+  }
+
+  .upgrade-card:hover, .research-card:hover, .building-card:hover, .stock-card:hover {
+    border-color: var(--gear-gold);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(251, 191, 36, 0.2);
+  }
+
+  .upgrade-card.affordable {
+    border-color: var(--gear-success);
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+  }
+
+  .upgrade-card.purchased {
+    opacity: 0.6;
+    border-color: rgba(255,255,255,0.1);
+  }
+
+  .achievement-card.locked {
+    opacity: 0.4;
+    filter: grayscale(0.8);
+  }
+
+  .achievement-card.unlocked {
+    border-color: var(--gear-success);
+    box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+  }
+
+  .achievement-card.secret {
+    border-color: var(--gear-danger);
+  }
+
+  .universe-card {
+    border-color: var(--godly-purple);
+  }
+
+  .universe-card:hover {
+    box-shadow: 0 4px 20px rgba(168, 85, 247, 0.3);
+  }
+
+  .progress-bar {
+    background: rgba(255,255,255,0.1);
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    background: linear-gradient(90deg, var(--gear-gold), #f59e0b);
+    transition: width 0.5s ease;
+  }
+
+  .stock-up { color: var(--gear-success); }
+  .stock-down { color: var(--gear-danger); }
+
+  .notification {
+    animation: slideIn 0.3s ease-out;
+  }
+
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
+  .tier-badge {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+
+  .scroll-container {
+    max-height: calc(100vh - 250px);
+    overflow-y: auto;
+  }
+
+  .scroll-container::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scroll-container::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.2);
+  }
+
+  .scroll-container::-webkit-scrollbar-thumb {
+    background: var(--gear-gold);
+    border-radius: 4px;
+  }
+
+  .prestige-btn {
+    background: linear-gradient(135deg, #a855f7, #7c3aed);
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.4);
+  }
+
+  .prestige-btn:disabled {
+    background: #4b5563;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .floating-text {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+  }
+</style>
+</head>
+<body class="text-gray-200">
+
+<div id="app" class="max-w-7xl mx-auto p-4">
+  <!-- Header -->
+  <header class="text-center mb-6 relative">
+    <h1 class="font-orbitron text-4xl md:text-5xl font-black text-yellow-400 mb-2 tracking-wider">GEAR OVERDRIVE</h1>
+    <div class="flex justify-center items-center gap-8 flex-wrap">
+      <div class="text-center">
+        <div class="text-sm text-gray-400 uppercase tracking-widest">Gears</div>
+        <div id="gearDisplay" class="font-orbitron text-3xl font-bold text-yellow-300">0</div>
+      </div>
+      <div class="text-center">
+        <div class="text-sm text-gray-400 uppercase tracking-widest">Per Second</div>
+        <div id="cpsDisplay" class="font-orbitron text-2xl font-bold text-cyan-400">0</div>
+      </div>
+      <div class="text-center">
+        <div class="text-sm text-gray-400 uppercase tracking-widest">Per Click</div>
+        <div id="clickDisplay" class="font-orbitron text-2xl font-bold text-green-400">1</div>
+      </div>
+      <div class="text-center" id="godlyDisplayContainer" style="display:none;">
+        <div class="text-sm text-purple-400 uppercase tracking-widest">Godly Gears</div>
+        <div id="godlyDisplay" class="font-orbitron text-2xl font-bold text-purple-300">0</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <nav class="flex flex-wrap justify-center gap-1 mb-6 border-b border-gray-700 pb-1">
+    <button class="tab-btn active px-4 py-2 font-bold text-sm uppercase tracking-wider" data-tab="forge">Forge</button>
+    <button class="tab-btn px-4 py-2 font-bold text-sm uppercase tracking-wider" data-tab="upgrades">Upgrades <span id="upgradesBadge" class="text-xs bg-yellow-600 px-1.5 rounded hidden">0</span></button>
+    <button class="tab-btn px-4 py-2 font-bold text-sm uppercase tracking-wider" data-tab="research">Research <span id="researchBadge" class="text-xs bg-cyan-600 px-1.5 rounded hidden">0</span></button>
+    <button class="tab-btn px-4 py-2 font-bold text-sm uppercase tracking-wider" data-tab="achievements">Trophies <span id="achBadge" class="text-xs bg-green-600 px-1.5 rounded hidden">0</span></button>
+    <button class="tab-btn px-4 py-2 font-bold text-sm uppercase tracking-wider" data-tab="stock">Stock Market</button>
+    <button class="tab-btn px-4 py-2 font-bold text-sm uppercase tracking-wider" data-tab="prestige">Prestige</button>
+    <button class="tab-btn px-4 py-2 font-bold text-sm uppercase tracking-wider" data-tab="universe">Universe</button>
+    <button class="tab-btn px-4 py-2 font-bold text-sm uppercase tracking-wider" data-tab="stats">Stats</button>
+    <button class="tab-btn px-4 py-2 font-bold text-sm uppercase tracking-wider" data-tab="casino">Casino</button>
+    <button class="tab-btn px-4 py-2 font-bold text-sm uppercase tracking-wider" data-tab="settings">Settings</button>
+  </nav>
+
+  <!-- Forge Tab -->
+  <div id="tab-forge" class="tab-content">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Click Area -->
+      <div class="lg:col-span-1 flex flex-col items-center justify-center min-h-[400px]">
+        <div class="relative">
+          <svg id="bigGear" class="big-gear" width="240" height="240" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="gearGrad" x1="0" y1="0" x2="240" y2="240">
+                <stop offset="0%" stop-color="#fbbf24"/>
+                <stop offset="50%" stop-color="#f59e0b"/>
+                <stop offset="100%" stop-color="#d97706"/>
+              </linearGradient>
+            </defs>
+            <g transform="translate(120,120)">
+              <circle r="90" fill="url(#gearGrad)" stroke="#78350f" stroke-width="3"/>
+              <circle r="40" fill="#1e1b4b" stroke="#fbbf24" stroke-width="2"/>
+              <circle r="15" fill="#0f0c29"/>
+              <!-- Teeth -->
+              <g id="gearTeeth">
+                <rect x="-12" y="-110" width="24" height="40" rx="3" fill="url(#gearGrad)" stroke="#78350f" stroke-width="2"/>
+                <rect x="-12" y="-110" width="24" height="40" rx="3" fill="url(#gearGrad)" stroke="#78350f" stroke-width="2" transform="rotate(30)"/>
+                <rect x="-12" y="-110" width="24" height="40" rx="3" fill="url(#gearGrad)" stroke="#78350f" stroke-width="2" transform="rotate(60)"/>
+                <rect x="-12" y="-110" width="24" height="40" rx="3" fill="url(#gearGrad)" stroke="#78350f" stroke-width="2" transform="rotate(90)"/>
+                <rect x="-12" y="-110" width="24" height="40" rx="3" fill="url(#gearGrad)" stroke="#78350f" stroke-width="2" transform="rotate(120)"/>
+                <rect x="-12" y="-110" width="24" height="40" rx="3" fill="url(#gearGrad)" stroke="#78350f" stroke-width="2" transform="rotate(150)"/>
+                <rect x="-12" y="-110" width="24" height="40" rx="3" fill="url(#gearGrad)" stroke="#78350f" stroke-width="2" transform="rotate(180)"/>
+                <rect x="-12" y="-110" width="24" height="40" rx="3" fill="url(#gearGrad)" stroke="#78350f" stroke-width="2" transform="rotate(210)"/>
+                <rect x="-12" y="-110" width="24" height="40" rx="3" fill="url(#gearGrad)" stroke="#78350f" stroke-width="2" transform="rotate(240)"/>
+                <rect x="-12" y="-110" width="24" height="40" rx="3" fill="url(#gearGrad)" stroke="#78350f" stroke-width="2" transform="rotate(270)"/>
+                <rect x="-12" y="-110" width="24" height="40" rx="3" fill="url(#gearGrad)" stroke="#78350f" stroke-width="2" transform="rotate(300)"/>
+                <rect x="-12" y="-110" width="24" height="40" rx="3" fill="url(#gearGrad)" stroke="#78350f" stroke-width="2" transform="rotate(330)"/>
+              </g>
+              <!-- Inner decoration -->
+              <circle r="75" fill="none" stroke="#78350f" stroke-width="1" stroke-dasharray="5,5"/>
+              <circle r="5" fill="#fbbf24" opacity="0.3"/>
+            </g>
+          </svg>
+        </div>
+        <p class="mt-4 text-gray-400 text-sm">Click the gear to craft!</p>
+        <div id="forgeBoost" class="mt-2 text-yellow-400 font-bold hidden">Boost Active!</div>
+      </div>
+
+      <!-- Buildings -->
+      <div class="lg:col-span-2">
+        <h2 class="font-orbitron text-xl font-bold text-yellow-400 mb-4">Gear Buildings</h2>
+        <div id="buildingsList" class="space-y-2 scroll-container pr-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upgrades Tab -->
+  <div id="tab-upgrades" class="tab-content hidden">
+    <div class="mb-4 flex flex-wrap gap-2">
+      <button class="tier-filter px-3 py-1 text-xs font-bold rounded bg-yellow-600" data-tier="all">ALL</button>
+      <button class="tier-filter px-3 py-1 text-xs font-bold rounded bg-gray-700 hover:bg-gray-600" data-tier="0">T1-5</button>
+      <button class="tier-filter px-3 py-1 text-xs font-bold rounded bg-gray-700 hover:bg-gray-600" data-tier="1">T6-10</button>
+      <button class="tier-filter px-3 py-1 text-xs font-bold rounded bg-gray-700 hover:bg-gray-600" data-tier="2">T11-15</button>
+      <button class="tier-filter px-3 py-1 text-xs font-bold rounded bg-gray-700 hover:bg-gray-600" data-tier="3">T16-20</button>
+      <button class="tier-filter px-3 py-1 text-xs font-bold rounded bg-gray-700 hover:bg-gray-600" data-tier="4">T21-25</button>
+      <span id="upgradeCount" class="ml-auto text-sm text-gray-400">0 / 1250</span>
+    </div>
+    <div id="upgradesList" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 scroll-container"></div>
+  </div>
+
+  <!-- Research Tab -->
+  <div id="tab-research" class="tab-content hidden">
+    <div class="mb-4 flex flex-wrap gap-2">
+      <button class="research-filter px-3 py-1 text-xs font-bold rounded bg-cyan-600" data-tree="all">ALL</button>
+      <button class="research-filter px-3 py-1 text-xs font-bold rounded bg-gray-700 hover:bg-gray-600" data-tree="mechanical">Mechanical</button>
+      <button class="research-filter px-3 py-1 text-xs font-bold rounded bg-gray-700 hover:bg-gray-600" data-tree="electrical">Electrical</button>
+      <button class="research-filter px-3 py-1 text-xs font-bold rounded bg-gray-700 hover:bg-gray-600" data-tree="quantum">Quantum</button>
+      <button class="research-filter px-3 py-1 text-xs font-bold rounded bg-gray-700 hover:bg-gray-600" data-tree="cosmic">Cosmic</button>
+      <button class="research-filter px-3 py-1 text-xs font-bold rounded bg-gray-700 hover:bg-gray-600" data-tree="divine">Divine</button>
+      <span id="researchCount" class="ml-auto text-sm text-gray-400">0 / 400</span>
+    </div>
+    <div id="researchList" class="grid grid-cols-1 md:grid-cols-2 gap-3 scroll-container"></div>
+  </div>
+
+  <!-- Achievements Tab -->
+  <div id="tab-achievements" class="tab-content hidden">
+    <div class="mb-4">
+      <div class="flex justify-between items-center mb-2">
+        <h2 class="font-orbitron text-xl font-bold text-yellow-400">Achievements</h2>
+        <span id="achCount" class="text-sm text-gray-400">0 / 816</span>
+      </div>
+      <div class="flex gap-2 mb-4">
+        <button class="ach-filter px-3 py-1 text-xs font-bold rounded bg-green-600" data-filter="all">ALL</button>
+        <button class="ach-filter px-3 py-1 text-xs font-bold rounded bg-gray-700 hover:bg-gray-600" data-filter="unlocked">Unlocked</button>
+        <button class="ach-filter px-3 py-1 text-xs font-bold rounded bg-gray-700 hover:bg-gray-600" data-filter="secret">Secret</button>
+      </div>
+      <div class="w-full progress-bar h-3">
+        <div id="achProgress" class="progress-fill h-full" style="width: 0%"></div>
+      </div>
+    </div>
+    <div id="achievementsList" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 scroll-container"></div>
+  </div>
+
+  <!-- Stock Market Tab -->
+  <div id="tab-stock" class="tab-content hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-2">
+        <h2 class="font-orbitron text-xl font-bold text-yellow-400 mb-4">Global Stock Exchange</h2>
+        <div id="stockList" class="space-y-2 scroll-container pr-2"></div>
+      </div>
+      <div class="lg:col-span-1">
+        <div class="bg-gray-900/60 p-4 rounded-lg border border-gray-700 mb-4">
+          <h3 class="font-bold text-yellow-400 mb-2">Portfolio</h3>
+          <div id="portfolioValue" class="font-orbitron text-xl text-green-400 mb-2">0 gears</div>
+          <div id="portfolioStocks" class="space-y-1 text-sm"></div>
+        </div>
+        <div class="bg-gray-900/60 p-4 rounded-lg border border-gray-700">
+          <h3 class="font-bold text-yellow-400 mb-2">Market News</h3>
+          <div id="marketNews" class="text-sm text-gray-400 space-y-1 italic"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Prestige Tab -->
+  <div id="tab-prestige" class="tab-content hidden">
+    <div class="text-center max-w-2xl mx-auto">
+      <h2 class="font-orbitron text-3xl font-bold text-purple-400 mb-4">Ascend to Godhood</h2>
+      <p class="text-gray-300 mb-6">When you reach <span class="text-yellow-400 font-bold">1 Sextillion (1e21)</span> gears, you can Prestige to earn <span class="text-purple-400 font-bold">Godly Gears</span>.</p>
+      <div class="bg-gray-900/60 p-6 rounded-lg border border-purple-500/30 mb-6">
+        <div class="text-sm text-gray-400 mb-1">Current Gears</div>
+        <div id="prestigeGears" class="font-orbitron text-2xl text-yellow-400 mb-4">0</div>
+        <div class="text-sm text-gray-400 mb-1">Godly Gears on Prestige</div>
+        <div id="prestigeGain" class="font-orbitron text-3xl text-purple-400 mb-6">0</div>
+        <button id="prestigeBtn" class="prestige-btn px-8 py-4 rounded-lg font-orbitron font-bold text-lg disabled:opacity-50" disabled>PRESTIGE NOW</button>
+      </div>
+      <div class="text-sm text-gray-400">
+        <p>Godly Gears persist through all prestiges and unlock Universe Gear Upgrades.</p>
+        <p class="mt-2">Formula: <span class="font-mono text-purple-300">floor(sqrt(totalGears / 1e21))</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Universe Tab -->
+  <div id="tab-universe" class="tab-content hidden">
+    <div class="text-center mb-6">
+      <h2 class="font-orbitron text-2xl font-bold text-purple-400">Universe Gear Upgrades</h2>
+      <p class="text-gray-400 text-sm">Spend Godly Gears to bend reality itself.</p>
+      <div class="mt-2 text-purple-300 font-orbitron text-xl" id="universeGodly">0 Godly Gears</div>
+    </div>
+    <div id="universeList" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 scroll-container"></div>
+  </div>
+
+  <!-- Stats Tab -->
+  <div id="tab-stats" class="tab-content hidden">
+    <div class="max-w-2xl mx-auto">
+      <h2 class="font-orbitron text-2xl font-bold text-yellow-400 mb-4">Statistics</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-gray-900/60 p-4 rounded-lg border border-gray-700">
+          <h3 class="font-bold text-cyan-400 mb-2">Production</h3>
+          <div class="space-y-1 text-sm">
+            <div class="flex justify-between"><span>Total Gears Made:</span> <span id="statTotalGears" class="text-yellow-300">0</span></div>
+            <div class="flex justify-between"><span>Gears From Clicks:</span> <span id="statClickGears" class="text-yellow-300">0</span></div>
+            <div class="flex justify-between"><span>Gears From Buildings:</span> <span id="statBuildingGears" class="text-yellow-300">0</span></div>
+            <div class="flex justify-between"><span>Total Clicks:</span> <span id="statClicks" class="text-yellow-300">0</span></div>
+            <div class="flex justify-between"><span>Current CPS:</span> <span id="statCPS" class="text-yellow-300">0</span></div>
+            <div class="flex justify-between"><span>Gears Per Minute:</span> <span id="statGPM" class="text-yellow-300">0</span></div>
+          </div>
+        </div>
+        <div class="bg-gray-900/60 p-4 rounded-lg border border-gray-700">
+          <h3 class="font-bold text-cyan-400 mb-2">Progress</h3>
+          <div class="space-y-1 text-sm">
+            <div class="flex justify-between"><span>Upgrades Owned:</span> <span id="statUpgrades" class="text-yellow-300">0</span></div>
+            <div class="flex justify-between"><span>Research Completed:</span> <span id="statResearch" class="text-yellow-300">0</span></div>
+            <div class="flex justify-between"><span>Achievements:</span> <span id="statAch" class="text-yellow-300">0</span></div>
+            <div class="flex justify-between"><span>Times Prestiged:</span> <span id="statPrestige" class="text-yellow-300">0</span></div>
+            <div class="flex justify-between"><span>Godly Gears Earned:</span> <span id="statGodly" class="text-purple-300">0</span></div>
+            <div class="flex justify-between"><span>Play Time:</span> <span id="statTime" class="text-yellow-300">0s</span></div>
+          </div>
+        </div>
+        <div class="bg-gray-900/60 p-4 rounded-lg border border-gray-700">
+          <h3 class="font-bold text-cyan-400 mb-2">Stock Market</h3>
+          <div class="space-y-1 text-sm">
+            <div class="flex justify-between"><span>Trades Made:</span> <span id="statTrades" class="text-yellow-300">0</span></div>
+            <div class="flex justify-between"><span>Portfolio Value:</span> <span id="statPortfolio" class="text-yellow-300">0</span></div>
+            <div class="flex justify-between"><span>Profit/Loss:</span> <span id="statProfit" class="text-yellow-300">0</span></div>
+          </div>
+        </div>
+        <div class="bg-gray-900/60 p-4 rounded-lg border border-gray-700">
+          <h3 class="font-bold text-cyan-400 mb-2">Multipliers</h3>
+          <div class="space-y-1 text-sm">
+            <div class="flex justify-between"><span>CPS Multiplier:</span> <span id="statCpsMult" class="text-green-400">x1.00</span></div>
+            <div class="flex justify-between"><span>Click Multiplier:</span> <span id="statClickMult" class="text-green-400">x1.00</span></div>
+            <div class="flex justify-between"><span>Building Efficiency:</span> <span id="statBuildEff" class="text-green-400">x1.00</span></div>
+            <div class="flex justify-between"><span>Gear Production:</span> <span id="statGearProd" class="text-green-400">x1.00</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Casino Tab -->
+  <div id="tab-casino" class="tab-content hidden">
+    <div class="max-w-3xl mx-auto">
+      <h2 class="font-orbitron text-2xl font-bold text-yellow-400 mb-2 text-center">Gear Casino</h2>
+      <p class="text-center text-gray-400 text-sm mb-6">Risk your gears for massive rewards. House edge: 5%</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Coin Flip -->
+        <div class="bg-gray-900/60 p-4 rounded-lg border border-gray-700 text-center">
+          <h3 class="font-bold text-cyan-400 mb-2">Coin Flip</h3>
+          <p class="text-xs text-gray-400 mb-3">50/50 chance. Double or nothing.</p>
+          <input type="number" id="coinBet" placeholder="Bet amount" class="w-full px-3 py-2 bg-gray-800 rounded text-white mb-2 text-center">
+          <div class="flex gap-2 justify-center">
+            <button onclick="playCoinFlip('heads')" class="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 rounded font-bold text-sm">Heads</button>
+            <button onclick="playCoinFlip('tails')" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 rounded font-bold text-sm">Tails</button>
+          </div>
+          <div id="coinResult" class="mt-2 text-sm font-bold min-h-[20px]"></div>
+        </div>
+
+        <!-- Dice Roll -->
+        <div class="bg-gray-900/60 p-4 rounded-lg border border-gray-700 text-center">
+          <h3 class="font-bold text-green-400 mb-2">Dice Roll</h3>
+          <p class="text-xs text-gray-400 mb-3">Roll over 4 to win 1.5x. Roll 6 to win 3x!</p>
+          <input type="number" id="diceBet" placeholder="Bet amount" class="w-full px-3 py-2 bg-gray-800 rounded text-white mb-2 text-center">
+          <button onclick="playDiceRoll()" class="px-6 py-2 bg-green-600 hover:bg-green-500 rounded font-bold text-sm">Roll Dice</button>
+          <div id="diceResult" class="mt-2 text-sm font-bold min-h-[20px]"></div>
+        </div>
+
+        <!-- Gear Slots -->
+        <div class="bg-gray-900/60 p-4 rounded-lg border border-gray-700 text-center md:col-span-2">
+          <h3 class="font-bold text-purple-400 mb-2">Gear Slots</h3>
+          <p class="text-xs text-gray-400 mb-3">Match 3 gears to win! Jackpot: 50x</p>
+          <input type="number" id="slotsBet" placeholder="Bet amount" class="w-full px-3 py-2 bg-gray-800 rounded text-white mb-3 text-center max-w-xs mx-auto block">
+          <div class="flex justify-center gap-4 mb-3">
+            <div id="slot1" class="w-16 h-16 bg-gray-800 rounded-lg flex items-center justify-center text-3xl border border-gray-600">⚙️</div>
+            <div id="slot2" class="w-16 h-16 bg-gray-800 rounded-lg flex items-center justify-center text-3xl border border-gray-600">⚙️</div>
+            <div id="slot3" class="w-16 h-16 bg-gray-800 rounded-lg flex items-center justify-center text-3xl border border-gray-600">⚙️</div>
+          </div>
+          <button onclick="playSlots()" class="px-8 py-2 bg-purple-600 hover:bg-purple-500 rounded font-bold text-sm">SPIN</button>
+          <div id="slotsResult" class="mt-2 text-sm font-bold min-h-[20px]"></div>
+        </div>
+
+        <!-- Wheel of Fortune -->
+        <div class="bg-gray-900/60 p-4 rounded-lg border border-gray-700 text-center md:col-span-2">
+          <h3 class="font-bold text-red-400 mb-2">Wheel of Fortune</h3>
+          <p class="text-xs text-gray-400 mb-3">Spin the wheel! Multipliers from 0x to 10x</p>
+          <input type="number" id="wheelBet" placeholder="Bet amount" class="w-full px-3 py-2 bg-gray-800 rounded text-white mb-3 text-center max-w-xs mx-auto block">
+          <button onclick="playWheel()" class="px-8 py-2 bg-red-600 hover:bg-red-500 rounded font-bold text-sm">SPIN WHEEL</button>
+          <div id="wheelResult" class="mt-2 text-sm font-bold min-h-[20px]"></div>
+        </div>
+      </div>
+
+      <div class="mt-6 text-center text-xs text-gray-500">
+        <p>Gambling is addictive. Please gear responsibly.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Tab -->
+  <div id="tab-settings" class="tab-content hidden">
+    <div class="max-w-xl mx-auto text-center">
+      <h2 class="font-orbitron text-2xl font-bold text-yellow-400 mb-6">Settings</h2>
+      <div class="space-y-4">
+        <button id="saveBtn" class="w-full px-6 py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-bold transition">Save Game</button>
+        <button id="loadBtn" class="w-full px-6 py-3 bg-green-600 hover:bg-green-500 rounded-lg font-bold transition">Load Game</button>
+        <button id="exportBtn" class="w-full px-6 py-3 bg-yellow-600 hover:bg-yellow-500 rounded-lg font-bold transition">Export Save</button>
+        <button id="importBtn" class="w-full px-6 py-3 bg-orange-600 hover:bg-orange-500 rounded-lg font-bold transition">Import Save</button>
+        <button id="resetBtn" class="w-full px-6 py-3 bg-red-600 hover:bg-red-500 rounded-lg font-bold transition">Hard Reset</button>
+        <div class="mt-4">
+          <label class="flex items-center justify-center gap-2 cursor-pointer">
+            <input type="checkbox" id="particlesToggle" checked class="w-5 h-5">
+            <span>Enable Click Particles</span>
+          </label>
+        </div>
+        <div class="mt-4">
+          <label class="flex items-center justify-center gap-2 cursor-pointer">
+            <input type="checkbox" id="notificationsToggle" checked class="w-5 h-5">
+            <span>Enable Notifications</span>
+          </label>
+        </div>
+      </div>
+      <div id="saveOutput" class="mt-4 text-xs text-gray-500 break-all hidden"></div>
+    </div>
+  </div>
+
+  <!-- Notifications -->
+  <div id="notifications" class="fixed top-4 right-4 space-y-2 z-50 pointer-events-none"></div>
+</div>
+
+<script>
+// ==================== GAME STATE ====================
+const Game = {
+  gears: 0,
+  totalGears: 0,
+  totalClicks: 0,
+  gearsFromClicks: 0,
+  gearsFromBuildings: 0,
+  startTime: Date.now(),
+  playTime: 0,
+  lastTick: Date.now(),
+  tradesMade: 0,
+  portfolioProfit: 0,
+  totalSpentUpgrades: 0,
+  totalSpentBuildings: 0,
+  totalSpentResearch: 0,
+  lastClickTime: Date.now(),
+  consecutiveIdleTime: 0,
+
+  clickPower: 1,
+  baseCPS: 0,
+  cpsMultiplier: 1,
+  clickMultiplier: 1,
+  buildingEfficiency: 1,
+  gearProductionMult: 1,
+  gpmMultiplier: 1,
+  criticalChance: 0,
+  criticalMult: 2,
+
+  prestigeCount: 0,
+  godlyGears: 0,
+  totalGodlyGearsEarned: 0,
+
+  particles: true,
+  notifications: true,
+
+  buildings: [],
+  upgrades: [],
+  research: [],
+  achievements: [],
+  secretAchievements: [],
+  universeUpgrades: [],
+  stocks: [],
+  portfolio: {},
+
+  newsHistory: []
+};
+
+// ==================== BUILDINGS ====================
+const buildingDefs = [
+  { name: "Hand Crank", baseCost: 15, baseCPS: 0.1, desc: "A simple crank to turn gears by hand." },
+  { name: "Water Wheel", baseCost: 100, baseCPS: 0.5, desc: "Harness the power of flowing water." },
+  { name: "Windmill", baseCost: 500, baseCPS: 2, desc: "The wind itself turns your gears." },
+  { name: "Steam Engine", baseCost: 3000, baseCPS: 10, desc: "Boil water, make power, spin gears." },
+  { name: "Electric Motor", baseCost: 15000, baseCPS: 40, desc: "Electromagnetic gear rotation." },
+  { name: "Assembly Line", baseCost: 100000, baseCPS: 150, desc: "Mass production of gears." },
+  { name: "Robot Arm", baseCost: 500000, baseCPS: 500, desc: "Automated precision gear crafting." },
+  { name: "Gear Factory", baseCost: 3e6, baseCPS: 2000, desc: "An entire factory dedicated to gears." },
+  { name: "Industrial Complex", baseCost: 2e7, baseCPS: 8000, desc: "City-sized gear production." },
+  { name: "Nanite Swarm", baseCost: 1.5e8, baseCPS: 30000, desc: "Microscopic machines building gears." },
+  { name: "Orbital Forge", baseCost: 1e9, baseCPS: 100000, desc: "Zero-gravity perfect gear smelting." },
+  { name: "Dyson Lathe", baseCost: 8e9, baseCPS: 400000, desc: "A star-powered gear lathe." },
+  { name: "Star Foundry", baseCost: 5e10, baseCPS: 1.5e6, desc: "Fuse stellar matter into gears." },
+  { name: "Black Hole Grinder", baseCost: 3e11, baseCPS: 6e6, desc: "Infinite gravity, infinite torque." },
+  { name: "Time Mill", baseCost: 2e12, baseCPS: 2.5e7, desc: "Harvest gears from past and future." },
+  { name: "Quantum Synthesizer", baseCost: 1.5e13, baseCPS: 1e8, desc: "Gears that exist in all states." },
+  { name: "Universe Constructor", baseCost: 1e14, baseCPS: 4e8, desc: "Build universes, harvest their gears." },
+  { name: "Multiverse Engine", baseCost: 8e14, baseCPS: 1.5e9, desc: "Tap into infinite parallel gears." },
+  { name: "Omniverse Core", baseCost: 5e15, baseCPS: 6e9, desc: "The final gear of all realities." },
+  { name: "Entropy Reverser", baseCost: 4e16, baseCPS: 2.5e10, desc: "Turn chaos back into perfect gears." }
+];
+
+function initBuildings() {
+  Game.buildings = buildingDefs.map((def, i) => ({
+    id: i,
+    ...def,
+    count: 0,
+    cpsMult: 1,
+    costMult: 1.15
+  }));
+}
+
+function getBuildingCPS(b) {
+  return b.baseCPS * b.count * b.cpsMult * Game.buildingEfficiency * Game.gearProductionMult;
+}
+
+function getBuildingCost(b) {
+  return Math.floor(b.baseCost * Math.pow(b.costMult, b.count));
+}
+
+function buyBuilding(id) {
+  const b = Game.buildings[id];
+  const cost = getBuildingCost(b);
+  if (Game.gears >= cost) {
+    Game.gears -= cost;
+    Game.totalSpentBuildings += cost;
+    b.count++;
+    updateAll();
+    checkAchievements();
+  }
+}
+
+function sellBuilding(id) {
+  const b = Game.buildings[id];
+  if (b.count > 0) {
+    b.count--;
+    Game.gears += Math.floor(getBuildingCost(b) * 0.5);
+    updateAll();
+  }
+}
+
+function buyMaxBuilding(id) {
+  const b = Game.buildings[id];
+  while (Game.gears >= getBuildingCost(b)) {
+    const cost = getBuildingCost(b);
+    Game.gears -= cost;
+    Game.totalSpentBuildings += cost;
+    b.count++;
+  }
+  updateAll();
+  checkAchievements();
+}
+
+// ==================== UPGRADE TIERS & GENERATION ====================
+const upgradeTiers = [
+  { name: "Rustic", color: "#a16207", prefix: ["Rusty", "Worn", "Old", "Creaky", "Loose"], suffix: ["Wrench", "Bolt", "Axle", "Lever", "Pulley"], effect: "cps", mult: 1.05 },
+  { name: "Iron", color: "#52525b", prefix: ["Iron", "Steel", "Sturdy", "Tight", "Heavy"], suffix: ["Gear", "Cog", "Sprocket", "Pinion", "Cam"], effect: "cps", mult: 1.08 },
+  { name: "Mechanical", color: "#0e7490", prefix: ["Precision", "Clockwork", "Spring", "Automatic", "Winding"], suffix: ["Mechanism", "Engine", "Drive", "Transmission", "Differential"], effect: "cps", mult: 1.10 },
+  { name: "Industrial", color: "#be123c", prefix: ["Steam", "Coal", "Forge", "Smelted", "Machined"], suffix: ["Furnace", "Boiler", "Press", "Lathe", "Mill"], effect: "building", mult: 1.15 },
+  { name: "Electric", color: "#2563eb", prefix: ["Electric", "Magnetic", "Conductive", "Charged", "Wired"], suffix: ["Motor", "Generator", "Transformer", "Capacitor", "Turbine"], effect: "cps", mult: 1.12 },
+  { name: "Electronic", color: "#0891b2", prefix: ["Digital", "Silicon", "Micro", "Circuit", "Binary"], suffix: ["Chip", "Processor", "Controller", "Sensor", "Actuator"], effect: "click", mult: 1.20 },
+  { name: "Automated", color: "#059669", prefix: ["Robotic", "Servo", "Hydraulic", "Pneumatic", "Linear"], suffix: ["Arm", "Manipulator", "Conveyor", "Sorter", "Assembler"], effect: "building", mult: 1.18 },
+  { name: "Nano", color: "#7c3aed", prefix: ["Nano", "Micro", "Atomic", "Molecular", "Crystalline"], suffix: ["Swarm", "Lattice", "Weave", "Mesh", "Filament"], effect: "cps", mult: 1.15 },
+  { name: "Orbital", color: "#4f46e5", prefix: ["Orbital", "Satellite", "Lunar", "Solar", "Stellar"], suffix: ["Array", "Station", "Platform", "Ring", "Dish"], effect: "building", mult: 1.22 },
+  { name: "Dyson", color: "#ea580c", prefix: ["Dyson", "Shell", "Habitat", "Collector", "Relay"], suffix: ["Sphere", "Swarm", "Bubble", "Net", "Web"], effect: "cps", mult: 1.20 },
+  { name: "Stellar", color: "#dc2626", prefix: ["Supernova", "Neutron", "Pulsar", "Quasar", "Magnetar"], suffix: ["Forge", "Crucible", "Bloom", "Anvil", "Hearth"], effect: "building", mult: 1.25 },
+  { name: "Singularity", color: "#171717", prefix: ["Singularity", "Event", "Horizon", "Accretion", "Ergosphere"], suffix: ["Grinder", "Compactor", "Condenser", "Squeezer", "Presser"], effect: "cps", mult: 1.25 },
+  { name: "Temporal", color: "#db2777", prefix: ["Temporal", "Chrono", "Epoch", "Eon", "Era"], suffix: ["Mill", "Clock", "Sundial", "Hourglass", "Chronometer"], effect: "gpm", mult: 1.30 },
+  { name: "Quantum", color: "#06b6d4", prefix: ["Quantum", "Entangled", "Superposed", "Collapsed", "Uncertain"], suffix: ["Synthesizer", "Compiler", "Reducer", "Expander", "Fluctuator"], effect: "click", mult: 1.35 },
+  { name: "Universal", color: "#8b5cf6", prefix: ["Universal", "Cosmic", "Galactic", "Interstellar", "Nebular"], suffix: ["Constructor", "Architect", "Builder", "Fabricator", "Creator"], effect: "building", mult: 1.30 },
+  { name: "Multiversal", color: "#ec4899", prefix: ["Multiversal", "Parallel", "Dimensional", "Brane", "String"], suffix: ["Engine", "Drive", "Thruster", "Propeller", "Impeller"], effect: "cps", mult: 1.35 },
+  { name: "Omniversal", color: "#f59e0b", prefix: ["Omniversal", "Meta", "Absolute", "Supreme", "Ultimate"], suffix: ["Core", "Heart", "Nucleus", "Kernel", "Center"], effect: "gearprod", mult: 1.40 },
+  { name: "Entropic", color: "#10b981", prefix: ["Entropic", "Chaotic", "Disordered", "Random", "Stochastic"], suffix: ["Reverser", "Orderer", "Arranger", "Sorter", "Organizer"], effect: "building", mult: 1.38 },
+  { name: "Divine", color: "#fcd34d", prefix: ["Divine", "Holy", "Sacred", "Blessed", "Consecrated"], suffix: ["Artifact", "Relic", "Icon", "Idol", "Totem"], effect: "cps", mult: 1.50 },
+  { name: "Godly", color: "#fbbf24", prefix: ["Godly", "Celestial", "Transcendent", "Ethereal", "Seraphic"], suffix: ["Machine", "Apparatus", "Device", "Instrument", "Tool"], effect: "all", mult: 1.45 },
+  { name: "Universal-II", color: "#c084fc", prefix: ["Neo-Universal", "Hyper-Cosmic", "Ultra-Galactic", "Mega-Stellar", "Giga-Planetary"], suffix: ["Assembler", "Integrator", "Unifier", "Combiner", "Linker"], effect: "cps", mult: 1.55 },
+  { name: "Omniversal-II", color: "#f472b6", prefix: ["Neo-Omniversal", "Hyper-Meta", "Ultra-Absolute", "Mega-Supreme", "Giga-Ultimate"], suffix: ["Overseer", "Monitor", "Regulator", "Controller", "Governor"], effect: "gearprod", mult: 1.60 },
+  { name: "Transcendent", color: "#60a5fa", prefix: ["Transcendent", "Enlightened", "Awakened", "Ascended", "Illuminated"], suffix: ["Construct", "Formation", "Structure", "Edifice", "Monolith"], effect: "building", mult: 1.55 },
+  { name: "Infinity", color: "#34d399", prefix: ["Infinite", "Endless", "Boundless", "Limitless", "Eternal"], suffix: ["Loop", "Cycle", "Spiral", "Helix", "Vortex"], effect: "cps", mult: 1.65 },
+  { name: "Absolute", color: "#f87171", prefix: ["Absolute", "Final", "Ultimate", "Terminal", "Conclusive"], suffix: ["Gear-Nirvana", "Cog-Heaven", "Sprocket-Paradise", "Pinion-Utopia", "Cam-Eden"], effect: "all", mult: 2.0 }
+];
+
+function initUpgrades() {
+  Game.upgrades = [];
+  let id = 0;
+  for (let t = 0; t < upgradeTiers.length; t++) {
+    const tier = upgradeTiers[t];
+    for (let i = 0; i < 50; i++) {
+      const prefix = tier.prefix[i % tier.prefix.length];
+      const suffix = tier.suffix[Math.floor(i / 10) % tier.suffix.length];
+      const num = (i % 10) + 1;
+      const cost = Math.floor(100 * Math.pow(2.5, t) * Math.pow(1.8, i) * (1 + t * 0.5));
+      let effectType = tier.effect;
+      if (effectType === "all") effectType = i % 2 === 0 ? "cps" : "click";
+
+      Game.upgrades.push({
+        id: id++,
+        name: `${prefix} ${suffix} ${num > 1 ? num : ''}`.trim(),
+        desc: `Tier ${t+1} upgrade. Boosts ${effectType === 'building' ? 'buildings' : effectType === 'gearprod' ? 'all gear production' : effectType === 'gpm' ? 'gears per minute' : effectType} by ${(tier.mult * 100 - 100).toFixed(0)}%.`,
+        cost: cost,
+        tier: t + 1,
+        tierColor: tier.color,
+        effectType,
+        mult: tier.mult,
+        purchased: false,
+        buildingId: effectType === 'building' ? Math.floor(i / 5) % buildingDefs.length : null
+      });
+    }
+  }
+}
+
+function buyUpgrade(id) {
+  const u = Game.upgrades[id];
+  if (u.purchased) return;
+  if (Game.gears >= u.cost) {
+    Game.gears -= u.cost;
+    Game.totalSpentUpgrades += u.cost;
+    u.purchased = true;
+    applyUpgradeEffect(u);
+    updateAll();
+    checkAchievements();
+  }
+}
+
+function applyUpgradeEffect(u) {
+  if (u.effectType === "cps") {
+    Game.cpsMultiplier *= u.mult;
+  } else if (u.effectType === "click") {
+    Game.clickMultiplier *= u.mult;
+  } else if (u.effectType === "building" && u.buildingId !== null) {
+    Game.buildings[u.buildingId].cpsMult *= u.mult;
+  } else if (u.effectType === "gearprod") {
+    Game.gearProductionMult *= u.mult;
+  } else if (u.effectType === "gpm") {
+    Game.gpmMultiplier *= u.mult;
+  }
+}
+
+function recalculateMultipliers() {
+  Game.cpsMultiplier = 1;
+  Game.clickMultiplier = 1;
+  Game.buildingEfficiency = 1;
+  Game.gearProductionMult = 1;
+  Game.gpmMultiplier = 1;
+  Game.criticalChance = 0;
+
+  Game.buildings.forEach(b => b.cpsMult = 1);
+
+  for (const u of Game.upgrades) {
+    if (u.purchased) applyUpgradeEffect(u);
+  }
+  for (const r of Game.research) {
+    if (r.purchased) applyResearchEffect(r);
+  }
+  for (const u of Game.universeUpgrades) {
+    if (u.purchased) applyUniverseEffect(u);
+  }
+}
+
+// ==================== RESEARCH ====================
+const researchTrees = [
+  { name: "Mechanical", color: "#a16207", types: ["cps", "building", "click", "efficiency", "cost"] },
+  { name: "Electrical", color: "#2563eb", types: ["cps", "click", "critical", "building", "speed"] },
+  { name: "Quantum", color: "#06b6d4", types: ["cps", "gearprod", "building", "gpm", "click"] },
+  { name: "Cosmic", color: "#8b5cf6", types: ["cps", "building", "gearprod", "efficiency", "click"] },
+  { name: "Divine", color: "#fbbf24", types: ["all", "cps", "click", "gearprod", "building"] }
+];
+
+const researchNames = {
+  Mechanical: ["Torque Analysis", "Lubrication Theory", "Gear Geometry", "Load Distribution", "Friction Reduction", "Material Stress", "Thermal Expansion", "Vibration Damping", "Precision Alignment", "Wear Prevention", "Force Multiplication", "Mechanical Advantage", "Linkage Design", "Cam Profiles", "Ratchet Mechanisms", "Escapement Theory", "Governor Design", "Flywheel Energy", "Spring Constants", "Damping Coefficients", "Bearing Selection", "Shaft Design", "Keyway Sizing", "Spline Geometry", "Thread Standards", "Tensile Strength", "Yield Point", "Fatigue Limit", "Creep Resistance", "Hardness Testing", "Surface Finish", "Tolerance Stacking", "Fit Types", "Clearance Control", "Interference Fits", "Press Fits", "Shrink Fits", "Expansion Joints", "Flexible Couplings", "Universal Joints", "Chain Drives", "Belt Tensions", "Gear Ratios", "Speed Reducers", "Torque Converters", "Clutch Design", "Brake Systems", "Pawl Mechanisms", "Detent Springs", "Indexing Tables"],
+  Electrical: ["Ohm's Law", "Kirchhoff's Rules", "AC Theory", "DC Motors", "Induction Coils", "Transformer Design", "Rectifier Circuits", "Filter Networks", "Amplifier Stages", "Oscillator Theory", "Feedback Loops", "Control Systems", "PID Tuning", "Sensor Fusion", "Signal Processing", "Digital Logic", "FPGA Design", "Microcontroller Arch", "PWM Generation", "Motor Drivers", "Power Electronics", "Inverter Theory", "SMPS Design", "EMI Shielding", "Grounding Techniques", "Circuit Protection", "Fuse Selection", "Breaker Sizing", "Relay Logic", "Contactor Design", "Solenoid Force", "Actuator Response", "Encoder Resolution", "Stepper Control", "Servo Tuning", "PLC Programming", "HMI Design", "SCADA Systems", "Fieldbus Protocols", "IoT Connectivity", "Wireless Power", "Energy Harvesting", "Supercapacitors", "Battery Management", "Fuel Cell Tech", "Thermoelectric", "Piezoelectricity", "Hall Effect", "Eddy Currents", "Skin Effect"],
+  Quantum: ["Wave Functions", "Uncertainty Principle", "Quantum Tunneling", "Spin States", "Entanglement", "Superposition", "Decoherence", "Qubit Design", "Quantum Gates", "Shor's Algorithm", "Grover Search", "Quantum Error Correction", "Topological Qubits", "Photon Qubits", "Trapped Ions", "Superconducting Loops", "Josephson Junctions", "Quantum Dots", "NV Centers", "Majorana Fermions", "Quantum Teleportation", "Bell States", "CHSH Inequality", "Quantum Key Distribution", "Quantum Repeaters", "Quantum Memory", "Quantum Sensors", "Atomic Clocks", "Quantum Metrology", "Quantum Lithography", "Quantum Dots Display", "Quantum Cascade", "Bose-Einstein", "Fermi Dirac", "Pauli Exclusion", "Quantum Harmonic", "Potential Wells", "Barrier Penetration", "Quantum Annealing", "Adiabatic QC", "Measurement Problem", "Copenhagen", "Many Worlds", "Pilot Wave", "Quantum Gravity", "Holography", "String Theory", "Brane Cosmology", "Loop Quantum", "Planck Scales"],
+  Cosmic: ["Orbital Mechanics", "Rocket Equation", "Tsiolkovsky", "Hohmann Transfer", "Gravity Assist", "Lagrange Points", "Orbital Period", "Escape Velocity", "Atmospheric Drag", "Reentry Physics", "Thermal Protection", "Ablative Shields", "Radiation Hardening", "Life Support", "Closed Loops", "In-Situ Resource", "Lunar Regolith", "Asteroid Mining", "Zero-G Foundry", "Vacuum Welding", "Solar Sails", "Ion Thrusters", "Plasma Propulsion", "Nuclear Thermal", "Fusion Drives", "Antimatter", "Warp Metrics", "Wormholes", "Stellar Classification", "Main Sequence", "Red Giants", "White Dwarfs", "Neutron Stars", "Black Holes", "Event Horizons", "Hawking Radiation", "Accretion Disks", "Relativistic Jets", "Gravitational Waves", "Pulsar Timing", "Dark Matter", "Dark Energy", "Cosmic Expansion", "Big Bang", "Nucleosynthesis", "Stellar Evolution", "Planetary Formation", "Habitable Zones", "Exoplanet Detection", "SETI Protocols"],
+  Divine: ["Sacred Geometry", "Golden Ratio", "Fibonacci Divine", "Platonic Solids", "Metatron Cube", "Flower of Life", "Tree of Life", "Merkaba Field", "Torus Energy", "Vortex Math", "Divine Proportion", "Canon of Proportion", "Harmonic Resonance", "Solfeggio Tones", "Schumann Frequency", "Earth Grid", "Ley Lines", "Sacred Sites", "Pyramid Power", "Crystal Grids", "Orgone Energy", "Zero Point", "Vacuum Energy", "Chi Flow", "Prana Distribution", "Kundalini Rising", "Chakra Alignment", "Aura Cleansing", "Akashic Records", "Morphic Fields", "Collective Unconscious", "Cosmic Consciousness", "Universal Mind", "Source Connection", "Light Body", "Meridian Lines", "Dantian Centers", "Three Treasures", "Five Elements", "Yin Yang Balance", "Tao of Gears", "Zen Machining", "Enlightened Design", "Nirvana Precision", "Samsara Cycle", "Karma Engine", "Dharma Wheel", "Bodhisattva Bot", "Tathagata Tech", "Parinirvana Protocol"]
+};
+
+function initResearch() {
+  Game.research = [];
+  let id = 0;
+  for (let t = 0; t < researchTrees.length; t++) {
+    const tree = researchTrees[t];
+    const names = researchNames[tree.name];
+    for (let i = 0; i < 80; i++) {
+      const cost = Math.floor(500 * Math.pow(3, t) * Math.pow(1.9, i));
+      const effect = tree.types[i % tree.types.length];
+      let mult = 1.1 + (i * 0.02);
+      if (effect === "all") mult = 1.05;
+
+      Game.research.push({
+        id: id++,
+        name: names[i % names.length] + (Math.floor(i / names.length) > 0 ? ` ${Math.floor(i / names.length) + 1}` : ''),
+        desc: `${tree.name} research. ${effect === 'all' ? 'Boosts all production' : 'Enhances ' + effect}.`,
+        cost: cost,
+        tree: tree.name,
+        treeColor: tree.color,
+        effectType: effect,
+        mult: mult,
+        purchased: false,
+        buildingId: effect === 'building' ? i % buildingDefs.length : null
+      });
+    }
+  }
+}
+
+function buyResearch(id) {
+  const r = Game.research[id];
+  if (r.purchased) return;
+  if (Game.gears >= r.cost) {
+    Game.gears -= r.cost;
+    Game.totalSpentResearch += r.cost;
+    r.purchased = true;
+    applyResearchEffect(r);
+    updateAll();
+    checkAchievements();
+  }
+}
+
+function applyResearchEffect(r) {
+  if (r.effectType === "cps") Game.cpsMultiplier *= r.mult;
+  else if (r.effectType === "click") Game.clickMultiplier *= r.mult;
+  else if (r.effectType === "building" && r.buildingId !== null) Game.buildings[r.buildingId].cpsMult *= r.mult;
+  else if (r.effectType === "gearprod") Game.gearProductionMult *= r.mult;
+  else if (r.effectType === "gpm") Game.gpmMultiplier *= r.mult;
+  else if (r.effectType === "efficiency") Game.buildingEfficiency *= r.mult;
+  else if (r.effectType === "critical") Game.criticalChance = Math.min(0.5, Game.criticalChance + 0.02);
+  else if (r.effectType === "all") {
+    Game.cpsMultiplier *= r.mult;
+    Game.clickMultiplier *= r.mult;
+    Game.gearProductionMult *= r.mult;
+  }
+}
+
+// ==================== ACHIEVEMENTS ====================
+function initAchievements() {
+  Game.achievements = [];
+  Game.secretAchievements = [];
+  let id = 0;
+
+  function addAch(name, desc, type, threshold, extra = {}) {
+    Game.achievements.push({ id: id++, name, desc, type, threshold, unlocked: false, ...extra });
+  }
+
+  // 1. Gear milestones (50)
+  const gearMilestones = [1,10,100,1e3,1e4,1e5,1e6,1e7,1e8,1e9,1e10,1e11,1e12,1e13,1e14,1e15,1e16,1e17,1e18,1e19,1e20,1e21,1e22,1e23,1e24,1e25,1e26,1e27,1e28,1e29,1e30,1e31,1e32,1e33,1e34,1e35,1e36,1e37,1e38,1e39,1e40,1e41,1e42,1e43,1e44,1e45,1e46,1e47,1e48,1e49];
+  const gearNames = ["First Gear","Decade","Century","Millennium","Myriad","Lakh","Millionaire","Crorepati","Hectomillion","Billionaire","Decabillion","Hectobillion","Trillionaire","Ten Trillion","Hundred Trillion","Quadrillionaire","Ten Quadrillion","Hundred Quadrillion","Quintillionaire","Ten Quintillion","Hundred Quintillion","Sextillionaire","Ten Sextillion","Hundred Sextillion","Septillionaire","Ten Septillion","Hundred Septillion","Octillionaire","Ten Octillion","Hundred Octillion","Nonillionaire","Ten Nonillion","Hundred Nonillion","Decillionaire","Ten Decillion","Hundred Decillion","Undecillionaire","Ten Undecillion","Hundred Undecillion","Duodecillionaire","Ten Duodecillion","Hundred Duodecillion","Tredecillionaire","Ten Tredecillion","Hundred Tredecillion","Quattuordecillionaire","Ten Quattuordecillion","Hundred Quattuordecillion","Quindecillionaire","Ten Quindecillion"];
+  for (let i = 0; i < 50; i++) addAch(gearNames[i], `Reach ${formatNumber(gearMilestones[i])} gears.`, "gears", gearMilestones[i]);
+
+  // 2. CPS milestones (50)
+  const cpsMilestones = [1,10,100,1e3,1e4,1e5,1e6,1e7,1e8,1e9,1e10,1e11,1e12,1e13,1e14,1e15,1e16,1e17,1e18,1e19,1e20,1e21,1e22,1e23,1e24,1e25,1e26,1e27,1e28,1e29,1e30,1e31,1e32,1e33,1e34,1e35,1e36,1e37,1e38,1e39,1e40,1e41,1e42,1e43,1e44,1e45,1e46,1e47,1e48,1e49];
+  const cpsNames = ["Tick","Tock","Hum","Whir","Buzz","Roar","Thunder","Cacophony","Symphony","Orchestra","Crescendo","Forte","Allegro","Presto","Vivace","Veloce","Rapido","Accelerando","Stringendo","Agitato","Furioso","Tremendo","Grandioso","Maestoso","Sempiterno","Infinito","Absoluto","Terminus","Apotheosis","Zenith","Apex","Pinnacle","Summit","Crown","Throne","Scepter","Orb","Grail","Ark","Monolith","Titan","Colossus","Leviathan","Behemoth","Juggernaut","Goliath","Titanomachy","Chronovore","Aeternum","Omega"];
+  for (let i = 0; i < 50; i++) addAch(`${cpsNames[i]} CPS`, `Reach ${formatNumber(cpsMilestones[i])} gears per second.`, "cps", cpsMilestones[i]);
+
+  // 3. Click milestones (50)
+  const clickMilestones = [1,10,100,500,1e3,5e3,1e4,5e4,1e5,5e5,1e6,5e6,1e7,5e7,1e8,5e8,1e9,5e9,1e10,5e10,1e11,5e11,1e12,5e12,1e13,5e13,1e14,5e14,1e15,5e15,1e16,5e16,1e17,5e17,1e18,5e18,1e19,5e19,1e20,5e20,1e21,5e21,1e22,5e22,1e23,5e23,1e24,5e24,1e25,5e25];
+  const clickNames = ["Tap","Pat","Knock","Rap","Thump","Bang","Slam","Pound","Hammer","Smash","Crush","Bludgeon","Pummel","Barrage","Salvo","Volley","Fusillade","Broadside","Blitz","Onslaught","Assault","Siege","Storm","Tempest","Cataclysm","Armageddon","Ragnarok","Apocalypse","Extinction","Oblivion","Annihilation","Erasure","Nullification","Void","Abyss","Chasm","Gulf","Rift","Schism","Brecha","Fissure","Fracture","Rupture","Break","Split","Cleave","Sunder","Divide","Sever","Separate"];
+  for (let i = 0; i < 50; i++) addAch(`${clickNames[i]} Click`, `Click ${formatNumber(clickMilestones[i])} times.`, "clicks", clickMilestones[i]);
+
+  // 4. Building count per type (20 buildings × 15 tiers = 300)
+  const bTiers = [1,5,10,25,50,100,200,500,1e3,5e3,1e4,2e4,5e4,1e5,2e5];
+  const bTierNames = ["Novice","Apprentice","Journeyman","Expert","Master","Grandmaster","Legend","Myth","Deity","Omnipotent","Transcendent","Cosmic","Universal","Infinite","Absolute"];
+  for (let b = 0; b < buildingDefs.length; b++) {
+    for (let t = 0; t < 15; t++) {
+      addAch(`${buildingDefs[b].name} ${bTierNames[t]}`, `Own ${formatNumber(bTiers[t])} ${buildingDefs[b].name}s.`, "building_count", bTiers[t], { buildingId: b });
+    }
+  }
+
+  // 5. Total buildings owned (20)
+  const totalBuildThresholds = [1,5,10,25,50,100,200,500,1e3,2e3,5e3,1e4,2e4,5e4,1e5,2e5,5e5,1e6,2e6,5e6];
+  const totalBuildNames = ["Builder","Constructor","Architect","Engineer","Developer","Founder","Planner","Designer","Creator","Inventor","Visionary","Dreamer","Pioneer","Pathfinder","Trailblazer","Forerunner","Harbringer","Prophet","Messiah","Savior"];
+  for (let i = 0; i < 20; i++) addAch(totalBuildNames[i], `Own ${formatNumber(totalBuildThresholds[i])} total buildings.`, "total_buildings", totalBuildThresholds[i]);
+
+  // 6. Building variety (own at least one of each) (1)
+  addAch("Diversified Portfolio", "Own at least one of every building type.", "building_variety", 1);
+
+  // 7. Upgrade milestones (25)
+  const upThresholds = [1,5,10,25,50,100,200,300,400,500,600,700,800,900,1000,1100,1200,1250];
+  const upNames = ["Tinkerer","Modifier","Enhancer","Optimizer","Maximizer","Specialist","Virtuoso","Connoisseur","Maestro","Savant","Grandmaster","Ultimate","Penultimate","Paramount","Supreme","Paramount II","Ultimate II","Terminal"];
+  for (let i = 0; i < upThresholds.length; i++) addAch(upNames[i] || `Upgrader ${i+1}`, `Purchase ${upThresholds[i]} upgrades.`, "upgrades", upThresholds[i]);
+
+  // 8. Upgrade tier achievements (25 tiers × 5 = 125)
+  const tierAchNames = ["Initiate","Adept","Scholar","Sage","Paragon"];
+  for (let t = 0; t < 25; t++) {
+    for (let i = 0; i < 5; i++) {
+      addAch(`${upgradeTiers[t].name} ${tierAchNames[i]}`, `Purchase ${(i+1)*10} upgrades from Tier ${t+1}.`, "tier_upgrades", (i+1)*10, { tierId: t+1 });
+    }
+  }
+
+  // 9. Research milestones (20)
+  const resThresholds = [1,5,10,25,50,75,100,150,200,250,300,350,400];
+  const resNames = ["Student","Researcher","Scientist","Professor","Doctor","Nobel Laureate","Pioneer","Visionary","Omniscient","Transcendent","Enlightened","Illuminated","Absolute"];
+  for (let i = 0; i < resThresholds.length; i++) addAch(resNames[i] || `Researcher ${i+1}`, `Complete ${resThresholds[i]} research projects.`, "research", resThresholds[i]);
+
+  // 10. Research tree achievements (5 trees × 10 = 50)
+  const treeAchNames = ["Beginner","Intermediate","Advanced","Expert","Master","Grandmaster","Legend","Myth","Deity","Omnipotent"];
+  for (let t = 0; t < 5; t++) {
+    for (let i = 0; i < 10; i++) {
+      addAch(`${researchTrees[t].name} ${treeAchNames[i]}`, `Complete ${(i+1)*8} ${researchTrees[t].name} research projects.`, "tree_research", (i+1)*8, { treeId: researchTrees[t].name });
+    }
+  }
+
+  // 11. Prestige milestones (20)
+  const presThresholds = [1,2,3,5,10,15,20,30,50,75,100,150,200,300,500,750,1e3,1500,2e3,5e3];
+  const presNames = ["Reborn","Twice Blessed","Thrice Divine","Pentarch","Decarch","Quindecarch","Vigintarch","Trigintarch","Quinquagintarch","Septuagintarch","Centarch","Ducentarch","Trecentarch","Quingentarch","Septingentarch","Millarch","Decimillarch","Vigintimillarch","Trigintimillarch","Maxarch"];
+  for (let i = 0; i < presThresholds.length; i++) addAch(presNames[i], `Prestige ${formatNumber(presThresholds[i])} times.`, "prestige", presThresholds[i]);
+
+  // 12. Godly Gear milestones (20)
+  const godThresholds = [1,10,100,1e3,1e4,1e5,1e6,1e7,1e8,1e9,1e10,1e11,1e12,1e13,1e14,1e15,1e16,1e17,1e18,1e19];
+  const godNames = ["Divine Spark","Holy Light","Blessed Soul","Sacred Heart","Consecrated Mind","Hallowed Spirit","Sanctified Being","Glorified Form","Deified Essence","Godhood","Transcendence","Omnipresence","Omniscience","Omnipotence","Absolute","Terminal","Ultimate","Final","Omega","Alpha-Omega"];
+  for (let i = 0; i < godThresholds.length; i++) addAch(godNames[i], `Earn ${formatNumber(godThresholds[i])} Godly Gears.`, "godly", godThresholds[i]);
+
+  // 13. Stock profit milestones (20)
+  const stkThresholds = [1,10,100,1e3,1e4,1e5,1e6,1e7,1e8,1e9,1e10,1e11,1e12,1e13,1e14,1e15,1e16,1e17,1e18,1e19];
+  const stkNames = ["Day Trader","Swing Trader","Position Trader","Scalper","Arbitrageur","Hedge Fund","Market Maker","Broker","Investment Bank","Wall Street","NYSE","NASDAQ","FTSE","DAX","Nikkei","Shanghai","Hang Seng","S&P 500","Dow Jones","Global Exchange"];
+  for (let i = 0; i < stkThresholds.length; i++) addAch(stkNames[i], `Make ${formatNumber(stkThresholds[i])} gears from stock trading.`, "stock_profit", stkThresholds[i]);
+
+  // 14. Stock trades milestones (15)
+  const tradeThresholds = [1,10,50,100,500,1e3,5e3,1e4,5e4,1e5,5e5,1e6,5e6,1e7,5e7];
+  const tradeNames = ["First Trade","Novice Trader","Active Trader","Frequent Trader","Prolific Trader","Insatiable Trader","Relentless Trader","Obsessive Trader","Compulsive Trader","Manic Trader","Psychotic Trader","Deranged Trader","Unhinged Trader","Astral Trader","Cosmic Trader"];
+  for (let i = 0; i < tradeThresholds.length; i++) addAch(tradeNames[i], `Execute ${formatNumber(tradeThresholds[i])} stock trades.`, "trades", tradeThresholds[i]);
+
+  // 15. Playtime milestones (25)
+  const timeThresholds = [60,300,600,1800,3600,7200,10800,14400,21600,28800,43200,86400,172800,259200,345600,432000,518400,604800,1209600,1814400,2419200,3024000,3628800,4233600,4838400];
+  const timeNames = ["Minute Man","Five Alive","Tenacious","Half Hour Hero","Hourly Worker","Double Shift","Triple Threat","Quad Squad","Sextuple","Octavian","Half Day","Daily Grind","Double Day","Triple Day","Quadruple Day","Quintuple Day","Sextuple Day","Week Warrior","Fortnight","Triple Week","Quadruple Week","Quintuple Week","Sextuple Week","Septuple Week","Octuple Week"];
+  for (let i = 0; i < timeThresholds.length; i++) addAch(timeNames[i], `Play for ${formatTime(timeThresholds[i])}.`, "playtime", timeThresholds[i]);
+
+  // 16. Universe upgrade milestones (15)
+  const uniThresholds = [1,2,3,5,10,15,20,30,40,50,75,100,150,200,250];
+  const uniNames = ["Cosmic Tinkerer","Stellar Modifier","Galactic Enhancer","Universal Optimizer","Multiversal Maximizer","Omniversal Specialist","Transcendent Virtuoso","Infinite Connoisseur","Eternal Maestro","Absolute Savant","Quantum Grandmaster","Singularity Sage","Nirvana Seeker","Paragon of Power","Terminal Entity"];
+  for (let i = 0; i < uniThresholds.length; i++) addAch(uniNames[i], `Purchase ${uniThresholds[i]} Universe Upgrades.`, "universe", uniThresholds[i]);
+
+  // 17. Idle CPS milestones (no clicking) (10)
+  const idleThresholds = [1,10,100,1e3,1e4,1e5,1e6,1e7,1e8,1e9];
+  const idleNames = ["Lazy","Relaxed","Chill","Idle","Passive","Inert","Static","Dormant","Hibernating","Comatose"];
+  for (let i = 0; i < idleThresholds.length; i++) addAch(`${idleNames[i]} Worker`, `Reach ${formatNumber(idleThresholds[i])} CPS without clicking for 60 seconds.`, "idle_cps", idleThresholds[i]);
+
+  // 18. Speedrun milestones (20)
+  const speedThresholds = [1e3,1e4,1e5,1e6,1e7,1e8,1e9,1e10,1e11,1e12,1e13,1e14,1e15,1e16,1e17,1e18,1e19,1e20,1e21,1e22];
+  const speedTimes = [60,120,300,600,900,1200,1800,2400,3000,3600,4800,6000,7200,9000,10800,12600,14400,16200,18000,21600];
+  const speedNames = ["Minute Million","Two Minute Ten Million","Five Minute Hundred Million","Ten Minute Billion","Fifteen Minute Ten Billion","Twenty Minute Hundred Billion","Thirty Minute Trillion","Forty Minute Ten Trillion","Fifty Minute Hundred Trillion","Hour Quadrillion","Eighty Minute Ten Quadrillion","Hundred Minute Hundred Quadrillion","Two Hour Quintillion","Two and Half Hour Ten Quintillion","Three Hour Hundred Quintillion","Three and Half Hour Sextillion","Four Hour Ten Sextillion","Four and Half Hour Hundred Sextillion","Five Hour Septillion","Six Hour Ten Septillion"];
+  for (let i = 0; i < 20; i++) addAch(speedNames[i], `Reach ${formatNumber(speedThresholds[i])} gears in under ${formatTime(speedTimes[i])}.`, "speedrun", speedThresholds[i], { timeLimit: speedTimes[i] });
+
+  // 19. Total spent on upgrades (15)
+  const spentUpThresholds = [1e3,1e4,1e5,1e6,1e7,1e8,1e9,1e10,1e11,1e12,1e13,1e14,1e15,1e16,1e17];
+  const spentUpNames = ["Small Spender","Modest Investor","Serious Backer","Major Financier","Capitalist","Industrialist","Tycoon","Magnate","Baron","Oligarch","Plutocrat","Billionaire Investor","Trillionaire Investor","Quadrillionaire Investor","Quintillionaire Investor"];
+  for (let i = 0; i < 15; i++) addAch(spentUpNames[i], `Spend ${formatNumber(spentUpThresholds[i])} gears on upgrades.`, "spent_upgrades", spentUpThresholds[i]);
+
+  // 20. Total spent on buildings (15)
+  const spentBldThresholds = [1e3,1e4,1e5,1e6,1e7,1e8,1e9,1e10,1e11,1e12,1e13,1e14,1e15,1e16,1e17];
+  const spentBldNames = ["Property Owner","Landlord","Developer","Contractor","Builder","Foreman","Site Manager","Project Manager","CEO","Chairman","Board Member","Majority Shareholder","Sole Proprietor","Monopolist","Cartel Leader"];
+  for (let i = 0; i < 15; i++) addAch(spentBldNames[i], `Spend ${formatNumber(spentBldThresholds[i])} gears on buildings.`, "spent_buildings", spentBldThresholds[i]);
+
+  // 21. Total spent on research (15)
+  const spentResThresholds = [1e3,1e4,1e5,1e6,1e7,1e8,1e9,1e10,1e11,1e12,1e13,1e14,1e15,1e16,1e17];
+  const spentResNames = ["Lab Assistant","Grad Student","Postdoc","Research Fellow","Principal Investigator","Lab Director","Dean","Provost","Chancellor","Minister of Science","Science Czar","Science Pope","Science God","Science Overlord","Science Itself"];
+  for (let i = 0; i < 15; i++) addAch(spentResNames[i], `Spend ${formatNumber(spentResThresholds[i])} gears on research.`, "spent_research", spentResThresholds[i]);
+
+  // 22. Portfolio value milestones (10)
+  const portThresholds = [1e3,1e4,1e5,1e6,1e7,1e8,1e9,1e10,1e11,1e12];
+  const portNames = ["Pocket Change","Nest Egg","Rainy Day Fund","Retirement Fund","Trust Fund","Endowment","Sovereign Wealth","National Reserve","Planetary Wealth","Galactic Reserve"];
+  for (let i = 0; i < 10; i++) addAch(portNames[i], `Have a stock portfolio worth ${formatNumber(portThresholds[i])} gears.`, "portfolio_value", portThresholds[i]);
+
+  // 23. Click power milestones (15)
+  const clickPowerThresholds = [1,10,100,1e3,1e4,1e5,1e6,1e7,1e8,1e9,1e10,1e11,1e12,1e13,1e14];
+  const clickPowerNames = ["Finger","Hand","Arm","Shoulder","Torso","Body","Room","Building","City","Country","Continent","Planet","Solar System","Galaxy","Universe"];
+  for (let i = 0; i < 15; i++) addAch(`${clickPowerNames[i]} Power`, `Reach ${formatNumber(clickPowerThresholds[i])} gears per click.`, "click_power", clickPowerThresholds[i]);
+
+  // 24. Building efficiency milestones (10)
+  const effThresholds = [2,5,10,25,50,100,250,500,1e3,1e4];
+  const effNames = ["Efficient","Streamlined","Optimized","Turbocharged","Supercharged","Hypercharged","Overclocked","Ultracharged","Megacharged","Gigacharged"];
+  for (let i = 0; i < 10; i++) addAch(effNames[i], `Reach x${effThresholds[i]} building efficiency.`, "efficiency", effThresholds[i]);
+
+  // 25. Gear production multiplier milestones (10)
+  const prodThresholds = [2,5,10,25,50,100,250,500,1e3,1e4];
+  const prodNames = ["Productive","Prolific","Fecund","Bountiful","Copious","Plenteous","Abundant","Inexhaustible","Inexorable","Inexplicable"];
+  for (let i = 0; i < 10; i++) addAch(`${prodNames[i]} Production`, `Reach x${prodThresholds[i]} gear production multiplier.`, "production", prodThresholds[i]);
+
+  // 26. Perfect square gears (10)
+  const squareThresholds = [1,4,9,16,25,36,49,64,81,100];
+  const squareNames = ["Unity","Quaternity","Novena","Sedecim","Pentecost","Trigesima","Septuagesima","Octogesima","Nonagesima","Century Square"];
+  for (let i = 0; i < 10; i++) addAch(squareNames[i], `Have exactly ${squareThresholds[i]} gears at any point.`, "perfect_square", squareThresholds[i]);
+
+  // Secret achievements (10)
+  Game.secretAchievements = [
+    { id: 0, name: "The First Secret", desc: "Click the big gear exactly 777 times.", type: "secret_clicks", threshold: 777, unlocked: false },
+    { id: 1, name: "Midnight Oil", desc: "Play at exactly midnight.", type: "secret_time", unlocked: false },
+    { id: 2, name: "Perfectionist", desc: "Have exactly 100 of every building.", type: "secret_perfect", unlocked: false },
+    { id: 3, name: "Hoarder", desc: "Have 1e30 gears without prestiging.", type: "secret_hoard", threshold: 1e30, unlocked: false },
+    { id: 4, name: "Speed Demon", desc: "Reach 1e6 CPS within 5 minutes of starting.", type: "secret_speed", threshold: 1e6, unlocked: false },
+    { id: 5, name: "Minimalist", desc: "Buy only Hand Cranks for the first 10 minutes.", type: "secret_minimal", unlocked: false },
+    { id: 6, name: "Lucky Seven", desc: "Have exactly 777777 gears.", type: "secret_lucky", threshold: 777777, unlocked: false },
+    { id: 7, name: "Market Crash", desc: "Lose 50% of portfolio value in one crash.", type: "secret_crash", unlocked: false },
+    { id: 8, name: "True Ascension", desc: "Prestige with exactly 1 Sextillion gears.", type: "secret_exact", threshold: 1e21, unlocked: false },
+    { id: 9, name: "The Final Secret", desc: "Unlock all other secret achievements.", type: "secret_all", unlocked: false }
+  ];
+
+  // Trackers for achievement checks
+  Game.totalSpentUpgrades = 0;
+  Game.totalSpentBuildings = 0;
+  Game.totalSpentResearch = 0;
+  Game.lastClickTime = 0;
+  Game.consecutiveIdleTime = 0;
+}
+
+function checkAchievements() {
+  const totalUpgrades = Game.upgrades.filter(u => u.purchased).length;
+  const totalResearch = Game.research.filter(r => r.purchased).length;
+  const totalUni = Game.universeUpgrades.filter(u => u.purchased).length;
+  const totalBuildings = Game.buildings.reduce((sum, b) => sum + b.count, 0);
+  const tierCounts = {};
+  for (const u of Game.upgrades) { if (u.purchased) tierCounts[u.tier] = (tierCounts[u.tier] || 0) + 1; }
+  const treeCounts = {};
+  for (const r of Game.research) { if (r.purchased) treeCounts[r.tree] = (treeCounts[r.tree] || 0) + 1; }
+
+  for (const a of Game.achievements) {
+    if (a.unlocked) continue;
+    let unlocked = false;
+    if (a.type === "gears" && Game.totalGears >= a.threshold) unlocked = true;
+    if (a.type === "cps" && Game.baseCPS >= a.threshold) unlocked = true;
+    if (a.type === "clicks" && Game.totalClicks >= a.threshold) unlocked = true;
+    if (a.type === "building_count" && Game.buildings[a.buildingId]?.count >= a.threshold) unlocked = true;
+    if (a.type === "total_buildings" && totalBuildings >= a.threshold) unlocked = true;
+    if (a.type === "building_variety" && Game.buildings.every(b => b.count >= 1)) unlocked = true;
+    if (a.type === "upgrades" && totalUpgrades >= a.threshold) unlocked = true;
+    if (a.type === "tier_upgrades" && (tierCounts[a.tierId] || 0) >= a.threshold) unlocked = true;
+    if (a.type === "research" && totalResearch >= a.threshold) unlocked = true;
+    if (a.type === "tree_research" && (treeCounts[a.treeId] || 0) >= a.threshold) unlocked = true;
+    if (a.type === "prestige" && Game.prestigeCount >= a.threshold) unlocked = true;
+    if (a.type === "godly" && Game.totalGodlyGearsEarned >= a.threshold) unlocked = true;
+    if (a.type === "stock_profit" && Game.portfolioProfit >= a.threshold) unlocked = true;
+    if (a.type === "trades" && Game.tradesMade >= a.threshold) unlocked = true;
+    if (a.type === "playtime" && Game.playTime >= a.threshold) unlocked = true;
+    if (a.type === "universe" && totalUni >= a.threshold) unlocked = true;
+    if (a.type === "idle_cps" && Game.consecutiveIdleTime >= 60 && Game.baseCPS >= a.threshold) unlocked = true;
+    if (a.type === "speedrun" && Game.totalGears >= a.threshold && Game.playTime <= a.timeLimit) unlocked = true;
+    if (a.type === "spent_upgrades" && Game.totalSpentUpgrades >= a.threshold) unlocked = true;
+    if (a.type === "spent_buildings" && Game.totalSpentBuildings >= a.threshold) unlocked = true;
+    if (a.type === "spent_research" && Game.totalSpentResearch >= a.threshold) unlocked = true;
+    if (a.type === "portfolio_value" && getPortfolioValue() >= a.threshold) unlocked = true;
+    if (a.type === "click_power" && Game.clickPower * Game.clickMultiplier >= a.threshold) unlocked = true;
+    if (a.type === "efficiency" && Game.buildingEfficiency >= a.threshold) unlocked = true;
+    if (a.type === "production" && Game.gearProductionMult >= a.threshold) unlocked = true;
+    if (a.type === "perfect_square" && Math.abs(Math.sqrt(Game.gears) - Math.round(Math.sqrt(Game.gears))) < 0.001 && Game.gears >= a.threshold) unlocked = true;
+
+    if (unlocked) {
+      a.unlocked = true;
+      showNotification(`Achievement Unlocked: ${a.name}!`);
+    }
+  }
+
+  // Secret achievements
+  let secretsUnlocked = 0;
+  for (const s of Game.secretAchievements) {
+    if (s.unlocked) { secretsUnlocked++; continue; }
+    let unlocked = false;
+    if (s.type === "secret_clicks" && Game.totalClicks >= s.threshold) unlocked = true;
+    if (s.type === "secret_time") {
+      const h = new Date().getHours();
+      const m = new Date().getMinutes();
+      if (h === 0 && m === 0) unlocked = true;
+    }
+    if (s.type === "secret_perfect" && Game.buildings.every(b => b.count === 100)) unlocked = true;
+    if (s.type === "secret_hoard" && Game.totalGears >= s.threshold && Game.prestigeCount === 0) unlocked = true;
+    if (s.type === "secret_speed" && Game.baseCPS >= s.threshold && Game.playTime <= 300) unlocked = true;
+    if (s.type === "secret_lucky" && Math.abs(Game.gears - s.threshold) < 1) unlocked = true;
+    if (s.type === "secret_exact" && Game.gears >= s.threshold && Game.gears < s.threshold * 1.01) unlocked = true;
+    if (s.type === "secret_all" && secretsUnlocked >= 9) unlocked = true;
+
+    if (unlocked) {
+      s.unlocked = true;
+      showNotification(`Secret Achievement Unlocked: ${s.name}!`, true);
+    }
+  }
+}
+
+// ==================== STOCK MARKET ====================
+const stockCompanies = [
+  { ticker: "APPL", name: "Apple Inc", basePrice: 175 },
+  { ticker: "MSFT", name: "Microsoft", basePrice: 330 },
+  { ticker: "GOOGL", name: "Alphabet", basePrice: 140 },
+  { ticker: "AMZN", name: "Amazon", basePrice: 130 },
+  { ticker: "NVDA", name: "NVIDIA", basePrice: 460 },
+  { ticker: "TSLA", name: "Tesla", basePrice: 250 },
+  { ticker: "META", name: "Meta", basePrice: 300 },
+  { ticker: "BRK.B", name: "Berkshire", basePrice: 350 },
+  { ticker: "JPM", name: "JPMorgan", basePrice: 145 },
+  { ticker: "JNJ", name: "Johnson", basePrice: 160 },
+  { ticker: "V", name: "Visa", basePrice: 240 },
+  { ticker: "PG", name: "P&G", basePrice: 145 },
+  { ticker: "UNH", name: "UnitedHealth", basePrice: 480 },
+  { ticker: "HD", name: "Home Depot", basePrice: 310 },
+  { ticker: "MA", name: "Mastercard", basePrice: 410 },
+  { ticker: "BAC", name: "Bank of America", basePrice: 28 },
+  { ticker: "ABBV", name: "AbbVie", basePrice: 150 },
+  { ticker: "PFE", name: "Pfizer", basePrice: 33 },
+  { ticker: "KO", name: "Coca-Cola", basePrice: 58 },
+  { ticker: "PEP", name: "PepsiCo", basePrice: 170 }
+];
+
+const newsHeadlines = [
+  "Market rallies on strong earnings",
+  "Tech sector faces headwinds",
+  "Federal Reserve signals rate pause",
+  "New AI breakthrough drives chip stocks",
+  "Energy prices surge amid supply concerns",
+  "Consumer spending beats expectations",
+  "Manufacturing data disappoints",
+  "Healthcare sector merger announced",
+  "Auto industry pivots to electric",
+  "Retail sales slump in quarterly report"
+];
+
+function initStocks() {
+  Game.stocks = stockCompanies.map((c, i) => ({
+    id: i,
+    ...c,
+    price: c.basePrice,
+    prevPrice: c.basePrice,
+    history: [c.basePrice],
+    volatility: 0.02 + Math.random() * 0.03
+  }));
+  Game.portfolio = {};
+}
+
+function updateStocks() {
+  for (const s of Game.stocks) {
+    s.prevPrice = s.price;
+    const change = (Math.random() - 0.5) * 2 * s.volatility;
+    s.price = Math.max(1, s.price * (1 + change));
+    s.history.push(s.price);
+    if (s.history.length > 50) s.history.shift();
+  }
+
+  if (Math.random() < 0.1) {
+    const news = newsHeadlines[Math.floor(Math.random() * newsHeadlines.length)];
+    Game.newsHistory.unshift(news);
+    if (Game.newsHistory.length > 10) Game.newsHistory.pop();
+  }
+}
+
+function buyStock(id, amount) {
+  const s = Game.stocks[id];
+  const cost = s.price * amount;
+  if (Game.gears >= cost) {
+    Game.gears -= cost;
+    Game.portfolio[id] = (Game.portfolio[id] || 0) + amount;
+    Game.tradesMade++;
+    updateAll();
+  }
+}
+
+function sellStock(id, amount) {
+  if (!Game.portfolio[id] || Game.portfolio[id] < amount) return;
+  const s = Game.stocks[id];
+  const revenue = s.price * amount;
+  Game.gears += revenue;
+  Game.portfolio[id] -= amount;
+  if (Game.portfolio[id] <= 0) delete Game.portfolio[id];
+  Game.tradesMade++;
+  updateAll();
+}
+
+function getPortfolioValue() {
+  let val = 0;
+  for (const [id, amount] of Object.entries(Game.portfolio)) {
+    val += Game.stocks[id].price * amount;
+  }
+  return val;
+}
+
+// ==================== PRESTIGE ====================
+function getPrestigeGain() {
+  return Math.floor(Math.sqrt(Game.totalGears / 1e21));
+}
+
+function canPrestige() {
+  return Game.totalGears >= 1e21;
+}
+
+function prestige() {
+  if (!canPrestige()) return;
+  const gain = getPrestigeGain();
+  if (gain <= 0) return;
+
+  Game.godlyGears += gain;
+  Game.totalGodlyGearsEarned += gain;
+  Game.prestigeCount++;
+
+  // Reset
+  Game.gears = 0;
+  Game.totalGears = 0;
+  Game.gearsFromClicks = 0;
+  Game.gearsFromBuildings = 0;
+  Game.baseCPS = 0;
+  Game.totalClicks = 0;
+  Game.clickPower = 1;
+  Game.cpsMultiplier = 1;
+  Game.clickMultiplier = 1;
+  Game.buildingEfficiency = 1;
+  Game.gearProductionMult = 1;
+  Game.gpmMultiplier = 1;
+  Game.criticalChance = 0;
+  Game.portfolio = {};
+  Game.tradesMade = 0;
+  Game.portfolioProfit = 0;
+
+  initBuildings();
+  initUpgrades();
+  initResearch();
+  initStocks();
+  initAchievements();
+  initUniverseUpgrades();
+
+  // Re-apply universe upgrades
+  for (const u of Game.universeUpgrades) {
+    if (u.purchased) applyUniverseEffect(u);
+  }
+
+  recalculateMultipliers();
+  updateAll();
+  showNotification(`Prestiged! Gained ${gain} Godly Gears!`, true);
+}
+
+// ==================== UNIVERSE UPGRADES ====================
+const universeDefs = [
+  { name: "Cosmic Lubrication", desc: "+5% CPS per level", effect: "cps", baseCost: 1, mult: 1.5, max: 25 },
+  { name: "Quantum Gearing", desc: "+5% Gears per Minute per level", effect: "gpm", baseCost: 2, mult: 1.8, max: 25 },
+  { name: "Stellar Forging", desc: "+5% Building Efficiency per level", effect: "efficiency", baseCost: 3, mult: 2.0, max: 25 },
+  { name: "Divine Click", desc: "+10% Click Power per level", effect: "click", baseCost: 5, mult: 2.5, max: 25 },
+  { name: "Universal Production", desc: "+5% All Gear Production per level", effect: "gearprod", baseCost: 8, mult: 3.0, max: 25 },
+  { name: "Multiversal Synergy", desc: "+1% Critical Click Chance per level", effect: "critical", baseCost: 10, mult: 3.5, max: 25 },
+  { name: "Omniversal Blessing", desc: "+10% CPS per level", effect: "cps2", baseCost: 15, mult: 4.0, max: 25 },
+  { name: "Entropy Reversal", desc: "+10% Building Efficiency per level", effect: "efficiency2", baseCost: 20, mult: 5.0, max: 25 },
+  { name: "Absolute Power", desc: "+15% All Production per level", effect: "all", baseCost: 30, mult: 6.0, max: 25 },
+  { name: "Nirvana Gear", desc: "+25% Gear Production per level", effect: "gearprod2", baseCost: 50, mult: 8.0, max: 25 }
+];
+
+function initUniverseUpgrades() {
+  if (Game.universeUpgrades.length === 0) {
+    let id = 0;
+    for (const def of universeDefs) {
+      for (let level = 0; level < def.max; level++) {
+        Game.universeUpgrades.push({
+          id: id++,
+          name: `${def.name} ${['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX','XXI','XXII','XXIII','XXIV','XXV'][level]}`,
+          desc: def.desc,
+          cost: Math.floor(def.baseCost * Math.pow(def.mult, level)),
+          effectType: def.effect,
+          mult: def.effect === "critical" ? 0.01 : (def.effect.includes("2") ? 1.10 : 1.05),
+          purchased: false,
+          level: level + 1
+        });
+      }
+    }
+  }
+}
+
+function buyUniverseUpgrade(id) {
+  const u = Game.universeUpgrades[id];
+  if (u.purchased) return;
+  if (Game.godlyGears >= u.cost) {
+    Game.godlyGears -= u.cost;
+    u.purchased = true;
+    applyUniverseEffect(u);
+    updateAll();
+    checkAchievements();
+  }
+}
+
+function applyUniverseEffect(u) {
+  if (u.effectType === "cps" || u.effectType === "cps2") Game.cpsMultiplier *= u.mult;
+  else if (u.effectType === "click") Game.clickMultiplier *= u.mult;
+  else if (u.effectType === "efficiency" || u.effectType === "efficiency2") Game.buildingEfficiency *= u.mult;
+  else if (u.effectType === "gearprod" || u.effectType === "gearprod2") Game.gearProductionMult *= u.mult;
+  else if (u.effectType === "gpm") Game.gpmMultiplier *= u.mult;
+  else if (u.effectType === "critical") Game.criticalChance = Math.min(0.5, Game.criticalChance + u.mult);
+  else if (u.effectType === "all") {
+    Game.cpsMultiplier *= u.mult;
+    Game.clickMultiplier *= u.mult;
+    Game.gearProductionMult *= u.mult;
+    Game.buildingEfficiency *= u.mult;
+  }
+}
+
+// ==================== CORE LOOP ====================
+function clickGear(e) {
+  Game.lastClickTime = Date.now();
+  Game.consecutiveIdleTime = 0;
+  let power = Game.clickPower * Game.clickMultiplier;
+  if (Math.random() < Game.criticalChance) {
+    power *= Game.criticalMult;
+    showFloatingText(e ? e.clientX : window.innerWidth/2, e ? e.clientY : window.innerHeight/2, `CRIT! +${formatNumber(power)}`, "#ef4444");
+  } else {
+    showFloatingText(e ? e.clientX : window.innerWidth/2, e ? e.clientY : window.innerHeight/2, `+${formatNumber(power)}`, "#fbbf24");
+  }
+  Game.gears += power;
+  Game.totalGears += power;
+  Game.gearsFromClicks += power;
+  Game.totalClicks++;
+  updateAll();
+  checkAchievements();
+}
+
+function gameTick() {
+  const now = Date.now();
+  const dt = (now - Game.lastTick) / 1000;
+  Game.lastTick = now;
+  Game.playTime += dt;
+
+  if (now - Game.lastClickTime > 1000) {
+    Game.consecutiveIdleTime += dt;
+  }
+
+  let cps = 0;
+  for (const b of Game.buildings) {
+    cps += getBuildingCPS(b);
+  }
+  Game.baseCPS = cps;
+
+  const tickGears = cps * dt;
+  Game.gears += tickGears;
+  Game.totalGears += tickGears;
+  Game.gearsFromBuildings += tickGears;
+
+  if (Math.floor(now / 1000) % 5 === 0) {
+    updateStocks();
+  }
+
+  if (Math.floor(Game.playTime) % 10 === 0) {
+    checkAchievements();
+  }
+
+  updateAll();
+}
+
+// ==================== RENDERING ====================
+function updateAll() {
+  renderHeader();
+  const visibleTab = document.querySelector('.tab-content:not(.hidden)');
+  if (!visibleTab) return;
+  switch (visibleTab.id) {
+    case 'tab-forge': renderBuildings(); break;
+    case 'tab-upgrades': renderUpgrades(); break;
+    case 'tab-research': renderResearch(); break;
+    case 'tab-achievements': renderAchievements(); break;
+    case 'tab-stock': renderStocks(); break;
+    case 'tab-prestige': renderPrestige(); break;
+    case 'tab-universe': renderUniverse(); break;
+    case 'tab-stats': renderStats(); break;
+    case 'tab-casino': break;
+    case 'tab-settings': break;
+  }
+}
+
+function renderHeader() {
+  document.getElementById('gearDisplay').textContent = formatNumber(Game.gears);
+  document.getElementById('cpsDisplay').textContent = formatNumber(Game.baseCPS) + '/s';
+  document.getElementById('clickDisplay').textContent = formatNumber(Game.clickPower * Game.clickMultiplier);
+  if (Game.godlyGears > 0 || Game.totalGodlyGearsEarned > 0) {
+    document.getElementById('godlyDisplayContainer').style.display = 'block';
+    document.getElementById('godlyDisplay').textContent = formatNumber(Game.godlyGears);
+  }
+  const gearSpeed = Math.max(0.2, 8 / (1 + Game.baseCPS / 50));
+  document.getElementById('bigGear').style.animationDuration = gearSpeed + 's';
+}
+
+function renderBuildings() {
+  const el = document.getElementById('buildingsList');
+  let html = '';
+  for (const b of Game.buildings) {
+    const cost = getBuildingCost(b);
+    const cps = getBuildingCPS(b);
+    const affordable = Game.gears >= cost;
+    html += `
+      <div class="building-card p-3 rounded-lg flex justify-between items-center ${affordable ? 'border-green-500' : ''}">
+        <div>
+          <div class="font-bold text-yellow-300">${b.name} <span class="text-gray-400">(${b.count})</span></div>
+          <div class="text-xs text-gray-400">${b.desc}</div>
+          <div class="text-xs text-cyan-400">${formatNumber(cps)}/s each</div>
+        </div>
+        <div class="text-right">
+          <div class="text-sm ${affordable ? 'text-green-400' : 'text-red-400'}">${formatNumber(cost)}</div>
+          <button onclick="buyBuilding(${b.id})" class="px-3 py-1 bg-yellow-600 hover:bg-yellow-500 rounded text-xs font-bold mt-1">Buy</button>
+          <button onclick="buyMaxBuilding(${b.id})" class="px-2 py-1 bg-yellow-700 hover:bg-yellow-600 rounded text-xs font-bold mt-1 ml-1">Max</button>
+          ${b.count > 0 ? `<button onclick="sellBuilding(${b.id})" class="px-2 py-1 bg-red-600 hover:bg-red-500 rounded text-xs font-bold mt-1 ml-1">Sell</button>` : ''}
+        </div>
+      </div>`;
+  }
+  el.innerHTML = html;
+}
+
+let currentUpgradeFilter = 'all';
+function renderUpgrades() {
+  const el = document.getElementById('upgradesList');
+  const purchased = Game.upgrades.filter(u => u.purchased).length;
+  document.getElementById('upgradeCount').textContent = `${purchased} / ${Game.upgrades.length}`;
+
+  let startTier = 0, endTier = 25;
+  if (currentUpgradeFilter === '0') { startTier = 0; endTier = 5; }
+  else if (currentUpgradeFilter === '1') { startTier = 5; endTier = 10; }
+  else if (currentUpgradeFilter === '2') { startTier = 10; endTier = 15; }
+  else if (currentUpgradeFilter === '3') { startTier = 15; endTier = 20; }
+  else if (currentUpgradeFilter === '4') { startTier = 20; endTier = 25; }
+
+  let html = '';
+  for (const u of Game.upgrades) {
+    if (u.tier < startTier + 1 || u.tier > endTier) continue;
+    const affordable = Game.gears >= u.cost;
+    html += `
+      <div class="upgrade-card p-3 rounded-lg ${u.purchased ? 'purchased' : affordable ? 'affordable' : ''}" onclick="buyUpgrade(${u.id})">
+        <div class="flex justify-between items-start">
+          <div class="font-bold text-sm" style="color:${u.tierColor}">${u.name}</div>
+          <span class="tier-badge" style="background:${u.tierColor}20;color:${u.tierColor};border:1px solid ${u.tierColor}">T${u.tier}</span>
+        </div>
+        <div class="text-xs text-gray-400 mt-1">${u.desc}</div>
+        <div class="text-xs ${affordable ? 'text-green-400' : 'text-red-400'} mt-1 font-bold">${u.purchased ? 'OWNED' : formatNumber(u.cost)}</div>
+      </div>`;
+  }
+  el.innerHTML = html;
+
+  const affordableCount = Game.upgrades.filter(u => !u.purchased && Game.gears >= u.cost).length;
+  const badge = document.getElementById('upgradesBadge');
+  if (affordableCount > 0) { badge.textContent = affordableCount; badge.classList.remove('hidden'); }
+  else { badge.classList.add('hidden'); }
+}
+
+let currentResearchFilter = 'all';
+function renderResearch() {
+  const el = document.getElementById('researchList');
+  const purchased = Game.research.filter(r => r.purchased).length;
+  document.getElementById('researchCount').textContent = `${purchased} / ${Game.research.length}`;
+
+  let html = '';
+  for (const r of Game.research) {
+    if (currentResearchFilter !== 'all' && r.tree.toLowerCase() !== currentResearchFilter) continue;
+    const affordable = Game.gears >= r.cost;
+    html += `
+      <div class="research-card p-3 rounded-lg ${r.purchased ? 'purchased' : affordable ? 'affordable' : ''}" onclick="buyResearch(${r.id})">
+        <div class="flex justify-between items-start">
+          <div class="font-bold text-sm" style="color:${r.treeColor}">${r.name}</div>
+          <span class="tier-badge" style="background:${r.treeColor}20;color:${r.treeColor};border:1px solid ${r.treeColor}">${r.tree}</span>
+        </div>
+        <div class="text-xs text-gray-400 mt-1">${r.desc}</div>
+        <div class="text-xs ${affordable ? 'text-green-400' : 'text-red-400'} mt-1 font-bold">${r.purchased ? 'RESEARCHED' : formatNumber(r.cost)}</div>
+      </div>`;
+  }
+  el.innerHTML = html;
+
+  const affordableCount = Game.research.filter(r => !r.purchased && Game.gears >= r.cost).length;
+  const badge = document.getElementById('researchBadge');
+  if (affordableCount > 0) { badge.textContent = affordableCount; badge.classList.remove('hidden'); }
+  else { badge.classList.add('hidden'); }
+}
+
+let currentAchFilter = 'all';
+function renderAchievements() {
+  const el = document.getElementById('achievementsList');
+  const allAch = [...Game.achievements, ...Game.secretAchievements.map(s => ({...s, secret: true}))];
+  const unlocked = allAch.filter(a => a.unlocked).length;
+  document.getElementById('achCount').textContent = `${unlocked} / ${allAch.length}`;
+  document.getElementById('achProgress').style.width = `${(unlocked / allAch.length) * 100}%`;
+
+  let html = '';
+  for (const a of allAch) {
+    if (currentAchFilter === 'unlocked' && !a.unlocked) continue;
+    if (currentAchFilter === 'secret' && !a.secret) continue;
+    if (a.secret && !a.unlocked) {
+      html += `
+        <div class="achievement-card secret locked p-3 rounded-lg border border-red-900/50">
+          <div class="font-bold text-red-400 text-sm">???</div>
+          <div class="text-xs text-gray-500">Secret Achievement - Locked</div>
+        </div>`;
+    } else {
+      html += `
+        <div class="achievement-card ${a.unlocked ? 'unlocked' : 'locked'} p-3 rounded-lg ${a.secret ? 'secret' : ''}">
+          <div class="font-bold ${a.unlocked ? 'text-yellow-300' : 'text-gray-500'} text-sm">${a.name}</div>
+          <div class="text-xs text-gray-400">${a.desc}</div>
+        </div>`;
+    }
+  }
+  el.innerHTML = html;
+
+  const newUnlocked = Game.achievements.filter(a => a.unlocked).length;
+  const badge = document.getElementById('achBadge');
+  if (newUnlocked > 0) { badge.textContent = newUnlocked; badge.classList.remove('hidden'); }
+}
+
+function renderStocks() {
+  const el = document.getElementById('stockList');
+  let html = '';
+  for (const s of Game.stocks) {
+    const change = ((s.price - s.prevPrice) / s.prevPrice) * 100;
+    const owned = Game.portfolio[s.id] || 0;
+    const changeClass = change >= 0 ? 'stock-up' : 'stock-down';
+    const arrow = change >= 0 ? '↑' : '↓';
+    const spark = renderSparkline(s.history, 80, 30);
+    html += `
+      <div class="stock-card p-3 rounded-lg flex justify-between items-center">
+        <div class="flex items-center gap-3">
+          <div>${spark}</div>
+          <div>
+            <div class="font-bold text-sm">${s.ticker} <span class="text-gray-400">- ${s.name}</span></div>
+            <div class="text-xs">Owned: <span class="text-yellow-300">${formatNumber(owned)}</span></div>
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="font-orbitron font-bold">${s.price.toFixed(2)}</div>
+          <div class="text-xs ${changeClass}">${arrow} ${Math.abs(change).toFixed(2)}%</div>
+          <div class="mt-1 space-x-1">
+            <button onclick="buyStock(${s.id}, 1)" class="px-2 py-0.5 bg-green-600 hover:bg-green-500 rounded text-xs">Buy 1</button>
+            <button onclick="buyStock(${s.id}, 10)" class="px-2 py-0.5 bg-green-700 hover:bg-green-600 rounded text-xs">10</button>
+            <button onclick="buyStock(${s.id}, 100)" class="px-2 py-0.5 bg-green-800 hover:bg-green-700 rounded text-xs">100</button>
+            ${owned > 0 ? `
+              <button onclick="sellStock(${s.id}, 1)" class="px-2 py-0.5 bg-red-600 hover:bg-red-500 rounded text-xs">Sell 1</button>
+              <button onclick="sellStock(${s.id}, ${Math.min(owned, 10)})" class="px-2 py-0.5 bg-red-700 hover:bg-red-600 rounded text-xs">Sell 10</button>
+            ` : ''}
+          </div>
+        </div>
+      </div>`;
+  }
+  el.innerHTML = html;
+
+  document.getElementById('portfolioValue').textContent = formatNumber(getPortfolioValue()) + ' gears';
+  let portHtml = '';
+  for (const [id, amount] of Object.entries(Game.portfolio)) {
+    const s = Game.stocks[id];
+    portHtml += `<div>${s.ticker}: ${formatNumber(amount)} @ ${s.price.toFixed(2)}</div>`;
+  }
+  document.getElementById('portfolioStocks').innerHTML = portHtml || '<div class="text-gray-500">No holdings</div>';
+
+  let newsHtml = '';
+  for (const n of Game.newsHistory.slice(0, 5)) {
+    newsHtml += `<div>> ${n}</div>`;
+  }
+  document.getElementById('marketNews').innerHTML = newsHtml || '<div class="text-gray-600">Market is calm...</div>';
+}
+
+function renderPrestige() {
+  document.getElementById('prestigeGears').textContent = formatNumber(Game.totalGears);
+  document.getElementById('prestigeGain').textContent = formatNumber(getPrestigeGain());
+  const btn = document.getElementById('prestigeBtn');
+  btn.disabled = !canPrestige();
+  btn.textContent = canPrestige() ? 'PRESTIGE NOW' : `NEED ${formatNumber(1e21)} GEARS`;
+}
+
+function renderUniverse() {
+  document.getElementById('universeGodly').textContent = `${formatNumber(Game.godlyGears)} Godly Gears`;
+  const el = document.getElementById('universeList');
+  let html = '';
+  for (const u of Game.universeUpgrades) {
+    if (u.purchased) continue;
+    const affordable = Game.godlyGears >= u.cost;
+    html += `
+      <div class="universe-card p-3 rounded-lg ${affordable ? 'border-purple-400' : ''}" onclick="buyUniverseUpgrade(${u.id})">
+        <div class="font-bold text-purple-300 text-sm">${u.name}</div>
+        <div class="text-xs text-gray-400 mt-1">${u.desc}</div>
+        <div class="text-xs ${affordable ? 'text-purple-400' : 'text-red-400'} mt-1 font-bold">${u.purchased ? 'OWNED' : formatNumber(u.cost) + ' Godly'}</div>
+      </div>`;
+  }
+  el.innerHTML = html;
+}
+
+function renderStats() {
+  document.getElementById('statTotalGears').textContent = formatNumber(Game.totalGears);
+  document.getElementById('statClickGears').textContent = formatNumber(Game.gearsFromClicks);
+  document.getElementById('statBuildingGears').textContent = formatNumber(Game.gearsFromBuildings);
+  document.getElementById('statClicks').textContent = formatNumber(Game.totalClicks);
+  document.getElementById('statCPS').textContent = formatNumber(Game.baseCPS);
+  document.getElementById('statGPM').textContent = formatNumber(Game.baseCPS * 60 * Game.gpmMultiplier);
+  document.getElementById('statUpgrades').textContent = Game.upgrades.filter(u => u.purchased).length;
+  document.getElementById('statResearch').textContent = Game.research.filter(r => r.purchased).length;
+  document.getElementById('statAch').textContent = Game.achievements.filter(a => a.unlocked).length;
+  document.getElementById('statPrestige').textContent = Game.prestigeCount;
+  document.getElementById('statGodly').textContent = formatNumber(Game.totalGodlyGearsEarned);
+  document.getElementById('statTime').textContent = formatTime(Game.playTime);
+  document.getElementById('statTrades').textContent = Game.tradesMade;
+  document.getElementById('statPortfolio').textContent = formatNumber(getPortfolioValue());
+  document.getElementById('statProfit').textContent = formatNumber(Game.portfolioProfit);
+  document.getElementById('statCpsMult').textContent = 'x' + Game.cpsMultiplier.toFixed(2);
+  document.getElementById('statClickMult').textContent = 'x' + Game.clickMultiplier.toFixed(2);
+  document.getElementById('statBuildEff').textContent = 'x' + Game.buildingEfficiency.toFixed(2);
+  document.getElementById('statGearProd').textContent = 'x' + Game.gearProductionMult.toFixed(2);
+}
+
+// ==================== UTILITIES ====================
+function formatNumber(n) {
+  if (n === undefined || n === null) return '0';
+  if (n < 1000) return n.toFixed(n % 1 === 0 ? 0 : 1);
+  const suffixes = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc', 'UDc', 'DDc', 'TDc', 'QaDc', 'QiDc', 'SxDc', 'SpDc', 'OcDc', 'NoDc', 'Vg'];
+  const tier = Math.floor(Math.log10(n) / 3);
+  if (tier >= suffixes.length) return n.toExponential(2);
+  const scaled = n / Math.pow(10, tier * 3);
+  return scaled.toFixed(2) + suffixes[tier];
+}
+
+function formatTime(s) {
+  const hrs = Math.floor(s / 3600);
+  const mins = Math.floor((s % 3600) / 60);
+  const secs = Math.floor(s % 60);
+  if (hrs > 0) return `${hrs}h ${mins}m ${secs}s`;
+  if (mins > 0) return `${mins}m ${secs}s`;
+  return `${secs}s`;
+}
+
+function showFloatingText(x, y, text, color) {
+  if (!Game.particles) return;
+  const el = document.createElement('div');
+  el.className = 'floating-text click-particle';
+  el.textContent = text;
+  el.style.color = color;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1200);
+}
+
+function showNotification(msg, important = false) {
+  if (!Game.notifications) return;
+  const container = document.getElementById('notifications');
+  const el = document.createElement('div');
+  el.className = `notification px-4 py-2 rounded-lg font-bold text-sm ${important ? 'bg-purple-600' : 'bg-yellow-600'}`;
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 300);
+  }, 4000);
+}
+
+// ==================== TAB SYSTEM ====================
+function switchTab(tab) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.getElementById('tab-' + tab).classList.remove('hidden');
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+  // Render newly visible tab immediately
+  switch (tab) {
+    case 'forge': renderBuildings(); break;
+    case 'upgrades': renderUpgrades(); break;
+    case 'research': renderResearch(); break;
+    case 'achievements': renderAchievements(); break;
+    case 'stock': renderStocks(); break;
+    case 'prestige': renderPrestige(); break;
+    case 'universe': renderUniverse(); break;
+    case 'stats': renderStats(); break;
+  }
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+});
+
+document.querySelectorAll('.tier-filter').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentUpgradeFilter = btn.dataset.tier;
+    document.querySelectorAll('.tier-filter').forEach(b => { b.classList.remove('bg-yellow-600'); b.classList.add('bg-gray-700'); });
+    btn.classList.remove('bg-gray-700');
+    btn.classList.add('bg-yellow-600');
+    renderUpgrades();
+  });
+});
+
+document.querySelectorAll('.research-filter').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentResearchFilter = btn.dataset.tree;
+    document.querySelectorAll('.research-filter').forEach(b => { b.classList.remove('bg-cyan-600'); b.classList.add('bg-gray-700'); });
+    btn.classList.remove('bg-gray-700');
+    btn.classList.add('bg-cyan-600');
+    renderResearch();
+  });
+});
+
+document.querySelectorAll('.ach-filter').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentAchFilter = btn.dataset.filter;
+    document.querySelectorAll('.ach-filter').forEach(b => { b.classList.remove('bg-green-600'); b.classList.add('bg-gray-700'); });
+    btn.classList.remove('bg-gray-700');
+    btn.classList.add('bg-green-600');
+    renderAchievements();
+  });
+});
+
+// ==================== SAVE / LOAD ====================
+let savedData = null;
+
+function saveGame() {
+  savedData = JSON.stringify(Game);
+  showNotification('Game Saved to memory! (Use Export for permanent save)');
+}
+
+function loadGame() {
+  if (savedData) {
+    const parsed = JSON.parse(savedData);
+    Object.assign(Game, parsed);
+    recalculateMultipliers();
+    updateAll();
+    showNotification('Game Loaded from memory!');
+  } else {
+    showNotification('No memory save found.');
+  }
+}
+
+function exportSave() {
+  const data = JSON.stringify(Game);
+  const encoded = btoa(data);
+  const out = document.getElementById('saveOutput');
+  out.textContent = encoded;
+  out.classList.remove('hidden');
+  navigator.clipboard?.writeText(encoded);
+  showNotification('Save exported to clipboard!');
+}
+
+function importSave() {
+  const encoded = prompt('Paste your save code:');
+  if (encoded) {
+    try {
+      const data = atob(encoded);
+      const parsed = JSON.parse(data);
+      Object.assign(Game, parsed);
+      recalculateMultipliers();
+      updateAll();
+      showNotification('Save imported!');
+    } catch (e) {
+      alert('Invalid save code!');
+    }
+  }
+}
+
+function hardReset() {
+  if (confirm('Are you sure? This will delete ALL progress!')) {
+    savedData = null;
+    location.reload();
+  }
+}
+
+// ==================== CASINO ====================
+function playCoinFlip(choice) {
+  const bet = Number(document.getElementById('coinBet').value);
+  if (!bet || bet <= 0 || Game.gears < bet) { showNotification('Invalid bet!'); return; }
+  Game.gears -= bet;
+  const result = Math.random() < 0.5 ? 'heads' : 'tails';
+  const win = result === choice;
+  const el = document.getElementById('coinResult');
+  if (win) {
+    Game.gears += bet * 2;
+    Game.portfolioProfit += bet;
+    el.textContent = `It's ${result.toUpperCase()}! You WIN ${formatNumber(bet * 2)} gears!`;
+    el.className = 'mt-2 text-sm font-bold text-green-400';
+  } else {
+    Game.portfolioProfit -= bet;
+    el.textContent = `It's ${result.toUpperCase()}! You lose.`;
+    el.className = 'mt-2 text-sm font-bold text-red-400';
+  }
+  updateAll();
+}
+
+function playDiceRoll() {
+  const bet = Number(document.getElementById('diceBet').value);
+  if (!bet || bet <= 0 || Game.gears < bet) { showNotification('Invalid bet!'); return; }
+  Game.gears -= bet;
+  const roll = Math.floor(Math.random() * 6) + 1;
+  const el = document.getElementById('diceResult');
+  if (roll >= 5) {
+    const mult = roll === 6 ? 3 : 1.5;
+    Game.gears += bet * mult;
+    Game.portfolioProfit += bet * (mult - 1);
+    el.textContent = `Rolled ${roll}! You WIN ${formatNumber(bet * mult)} gears!`;
+    el.className = 'mt-2 text-sm font-bold text-green-400';
+  } else {
+    Game.portfolioProfit -= bet;
+    el.textContent = `Rolled ${roll}. You lose.`;
+    el.className = 'mt-2 text-sm font-bold text-red-400';
+  }
+  updateAll();
+}
+
+const slotSymbols = ['⚙️','🔩','🔧','⚡','⭐','💎','🔥'];
+function playSlots() {
+  const bet = Number(document.getElementById('slotsBet').value);
+  if (!bet || bet <= 0 || Game.gears < bet) { showNotification('Invalid bet!'); return; }
+  Game.gears -= bet;
+  const s1 = slotSymbols[Math.floor(Math.random() * slotSymbols.length)];
+  const s2 = slotSymbols[Math.floor(Math.random() * slotSymbols.length)];
+  const s3 = slotSymbols[Math.floor(Math.random() * slotSymbols.length)];
+  document.getElementById('slot1').textContent = s1;
+  document.getElementById('slot2').textContent = s2;
+  document.getElementById('slot3').textContent = s3;
+  const el = document.getElementById('slotsResult');
+  if (s1 === s2 && s2 === s3) {
+    const mult = s1 === '💎' ? 50 : s1 === '🔥' ? 20 : 10;
+    Game.gears += bet * mult;
+    Game.portfolioProfit += bet * (mult - 1);
+    el.textContent = `JACKPOT! ${s1}${s2}${s3} = ${formatNumber(bet * mult)} gears!`;
+    el.className = 'mt-2 text-sm font-bold text-purple-400';
+  } else if (s1 === s2 || s2 === s3 || s1 === s3) {
+    Game.gears += bet * 2;
+    Game.portfolioProfit += bet;
+    el.textContent = `Pair win! You get ${formatNumber(bet * 2)} gears!`;
+    el.className = 'mt-2 text-sm font-bold text-green-400';
+  } else {
+    Game.portfolioProfit -= bet;
+    el.textContent = 'No match. Better luck next time!';
+    el.className = 'mt-2 text-sm font-bold text-red-400';
+  }
+  updateAll();
+}
+
+function playWheel() {
+  const bet = Number(document.getElementById('wheelBet').value);
+  if (!bet || bet <= 0 || Game.gears < bet) { showNotification('Invalid bet!'); return; }
+  Game.gears -= bet;
+  const outcomes = [
+    { mult: 0, label: 'BUST', weight: 20 },
+    { mult: 0.5, label: 'Half Back', weight: 15 },
+    { mult: 1, label: 'Break Even', weight: 20 },
+    { mult: 2, label: 'Double', weight: 20 },
+    { mult: 5, label: 'Quintuple', weight: 10 },
+    { mult: 10, label: 'JACKPOT', weight: 5 }
+  ];
+  const totalWeight = outcomes.reduce((s, o) => s + o.weight, 0);
+  let rand = Math.random() * totalWeight;
+  let outcome = outcomes[0];
+  for (const o of outcomes) {
+    rand -= o.weight;
+    if (rand <= 0) { outcome = o; break; }
+  }
+  const el = document.getElementById('wheelResult');
+  if (outcome.mult > 1) {
+    Game.gears += bet * outcome.mult;
+    Game.portfolioProfit += bet * (outcome.mult - 1);
+    el.textContent = `${outcome.label}! You WIN ${formatNumber(bet * outcome.mult)} gears!`;
+    el.className = 'mt-2 text-sm font-bold text-green-400';
+  } else if (outcome.mult === 1) {
+    Game.gears += bet;
+    el.textContent = `${outcome.label}. You get your bet back.`;
+    el.className = 'mt-2 text-sm font-bold text-yellow-400';
+  } else if (outcome.mult === 0.5) {
+    Game.gears += bet * 0.5;
+    Game.portfolioProfit -= bet * 0.5;
+    el.textContent = `${outcome.label}. You lose half.`;
+    el.className = 'mt-2 text-sm font-bold text-orange-400';
+  } else {
+    Game.portfolioProfit -= bet;
+    el.textContent = `${outcome.label}! You lose everything.`;
+    el.className = 'mt-2 text-sm font-bold text-red-400';
+  }
+  updateAll();
+}
+
+// ==================== STOCK SPARKLINES ====================
+function renderSparkline(history, width, height) {
+  if (history.length < 2) return '';
+  const min = Math.min(...history);
+  const max = Math.max(...history);
+  const range = max - min || 1;
+  let path = '';
+  for (let i = 0; i < history.length; i++) {
+    const x = (i / (history.length - 1)) * width;
+    const y = height - ((history[i] - min) / range) * height;
+    path += (i === 0 ? 'M' : 'L') + `${x},${y}`;
+  }
+  const color = history[history.length - 1] >= history[0] ? '#22c55e' : '#ef4444';
+  return `<svg width="${width}" height="${height}" class="opacity-70"><path d="${path}" fill="none" stroke="${color}" stroke-width="2"/></svg>`;
+}
+
+document.getElementById('saveBtn').addEventListener('click', saveGame);
+document.getElementById('loadBtn').addEventListener('click', loadGame);
+document.getElementById('exportBtn').addEventListener('click', exportSave);
+document.getElementById('importBtn').addEventListener('click', importSave);
+document.getElementById('resetBtn').addEventListener('click', hardReset);
+document.getElementById('particlesToggle').addEventListener('change', e => Game.particles = e.target.checked);
+document.getElementById('notificationsToggle').addEventListener('change', e => Game.notifications = e.target.checked);
+document.getElementById('bigGear').addEventListener('click', clickGear);
+document.getElementById('prestigeBtn').addEventListener('click', prestige);
+
+// Keyboard shortcut
+let keys = {};
+document.addEventListener('keydown', e => {
+  keys[e.key] = true;
+  if (e.key === ' ') {
+    e.preventDefault();
+    clickGear();
+  }
+});
+document.addEventListener('keyup', e => keys[e.key] = false);
+
+// ==================== INITIALIZATION ====================
+function init() {
+  initBuildings();
+  initUpgrades();
+  initResearch();
+  initStocks();
+  initUniverseUpgrades();
+  initAchievements();
+  updateAll();
+  setInterval(gameTick, 100);
+}
+
+init();
+</script>
+</body>
+</html>
